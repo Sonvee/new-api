@@ -169,6 +169,7 @@ export const STATIC_I18N_KEYS = [
   'Rankings',
   'Docs',
   'About',
+  'Use an internal path starting with / or a full http(s) URL.',
 
   // Sidebar views (drill-in workspaces)
   'System Settings',
