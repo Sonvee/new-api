@@ -20,6 +20,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useStatus } from '@/hooks/use-status'
+import { isExternalHeaderNavUrl } from '@/lib/header-navigation-links'
 import { parseHeaderNavModulesFromStatus } from '@/lib/nav-modules'
 import { useAuthStore } from '@/stores/auth-store'
 
@@ -99,6 +100,14 @@ export function useTopNavLinks(): TopNavLink[] {
   if (modules?.about !== false) {
     links.push({ title: t('About'), href: '/about' })
   }
+
+  modules.customLinks.forEach((item) => {
+    links.push({
+      title: item.name,
+      href: item.url,
+      external: isExternalHeaderNavUrl(item.url),
+    })
+  })
 
   return links
 }
