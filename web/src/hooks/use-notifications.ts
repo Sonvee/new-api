@@ -144,12 +144,29 @@ export function useNotifications() {
     }
   }, [noticeContent, lastReadNotice, announcements, isAnnouncementRead])
 
+  const unreadAnnouncements = useMemo(
+    () =>
+      announcements.filter((item) => {
+        const key = getAnnouncementKey(item)
+        return !isAnnouncementRead(key)
+      }),
+    [announcements, isAnnouncementRead]
+  )
+
   const markAnnouncementsAsRead = () => {
     if (announcements.length > 0) {
       const allKeys = announcements.map((item: Record<string, unknown>) =>
         getAnnouncementKey(item)
       )
       markAnnouncementsRead(allKeys)
+    }
+  }
+
+  const markUnreadAnnouncementsAsRead = () => {
+    if (unreadAnnouncements.length > 0) {
+      markAnnouncementsRead(
+        unreadAnnouncements.map((item) => getAnnouncementKey(item))
+      )
     }
   }
 
@@ -191,6 +208,7 @@ export function useNotifications() {
     // Data
     notice: noticeContent,
     announcements,
+    unreadAnnouncements,
     loading: noticeLoading || statusLoading,
 
     // Unread counts
@@ -207,6 +225,7 @@ export function useNotifications() {
     // Actions
     openPopover: handleOpenPopover,
     closePopover: () => setPopoverOpen(false),
+    markUnreadAnnouncementsAsRead,
     refetchNotice,
   }
 }
