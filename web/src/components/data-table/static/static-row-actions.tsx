@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Pin, Trash2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -32,6 +32,8 @@ type StaticRowActionsProps = {
   menuLabel: string
   onEdit: () => void
   onDelete: () => void
+  pinLabel?: string
+  onPin?: () => void
   editDisabled?: boolean
   deleteDisabled?: boolean
 }
@@ -49,6 +51,14 @@ export function StaticRowActions(props: StaticRowActionsProps) {
         <Pencil />
       </Button>
       <DataTableRowActionMenu ariaLabel={props.menuLabel}>
+        {props.pinLabel && props.onPin ? (
+          <DropdownMenuItem onClick={props.onPin}>
+            {props.pinLabel}
+            <DropdownMenuShortcut>
+              <Pin size={16} />
+            </DropdownMenuShortcut>
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuItem
           onClick={props.onDelete}
           disabled={props.deleteDisabled}

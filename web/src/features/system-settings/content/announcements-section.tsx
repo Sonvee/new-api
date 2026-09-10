@@ -41,6 +41,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Switch } from '@/components/ui/switch'
 import {
   Form,
   FormControl,
@@ -62,6 +63,8 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import dayjs from '@/lib/dayjs'
 import { handleServerError } from '@/lib/handle-server-error'
+
+import { getNextAnnouncementId } from './lib/announcement-id'
 
 import { SettingsSwitchField } from '../components/settings-form-layout'
 import { SettingsSection } from '../components/settings-section'
@@ -217,6 +220,17 @@ export function AnnouncementsSection({
     setShowDialog(true)
   }
 
+  const handleTogglePinned = (announcement: Announcement) => {
+    setAnnouncements((prev) =>
+      prev.map((item) =>
+        item.id === announcement.id
+          ? { ...item, pinned: !item.pinned }
+          : item
+      )
+    )
+    setHasChanges(true)
+  }
+
   const handleDelete = (announcement: Announcement) => {
     setEditingAnnouncement(announcement)
     setDeleteTarget('single')
@@ -264,7 +278,7 @@ export function AnnouncementsSection({
       )
       toast.success(t('Announcement updated. Click "Save Settings" to apply.'))
     } else {
-      const newId = Math.max(...announcements.map((item) => item.id), 0) + 1
+      const newId = getNextAnnouncementId(announcements)
       setAnnouncements((prev) => [...prev, { id: newId, ...values }])
       toast.success(t('Announcement added. Click "Save Settings" to apply.'))
     }
@@ -452,9 +466,11 @@ export function AnnouncementsSection({
                 <StaticRowActions
                   editLabel={t('Edit')}
                   deleteLabel={t('Delete')}
+                  pinLabel={announcement.pinned ? t('Unpin') : t('Pin')}
                   menuLabel={t('Open menu')}
                   onEdit={() => handleEdit(announcement)}
                   onDelete={() => handleDelete(announcement)}
+                  onPin={() => handleTogglePinned(announcement)}
                 />
               ),
             },
@@ -592,18 +608,15 @@ export function AnnouncementsSection({
               control={form.control}
               name='pinned'
               render={({ field }) => (
-                <FormItem className='flex items-center gap-2'>
+                <FormItem className='flex items-center gap-4'>
+                  <FormLabel>{t('Pinned')}</FormLabel>
                   <FormControl>
-                    <Checkbox
+                    <Switch
                       checked={field.value}
-                      onCheckedChange={(checked) =>
-                        field.onChange(checked === true)
-                      }
+                      onCheckedChange={field.onChange}
+                      aria-label={t('Pinned')}
                     />
                   </FormControl>
-                  <FormLabel className='cursor-pointer'>
-                    {t('Pinned')}
-                  </FormLabel>
                 </FormItem>
               )}
             />
