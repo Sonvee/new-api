@@ -4296,6 +4296,7 @@
     "Pick models and derive the other side with a rule to create request-to-upstream mappings.": "选择模型并用规则派生另一侧名称，生成「请求模型 → 上游模型」映射。",
     "Pick or create both a store and a product before saving.": "保存前请同时选择或创建店铺和产品。",
     "Ping Interval (seconds)": "Ping 间隔（秒）",
+    "Pinned": "置顶",
     "Plan": "套餐",
     "Plan ID": "套餐 ID",
     "Plan Name": "套餐名称",

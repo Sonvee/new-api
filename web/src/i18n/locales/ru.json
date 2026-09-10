@@ -4296,6 +4296,7 @@
     "Pick models and derive the other side with a rule to create request-to-upstream mappings.": "Выберите модели и получите вторую сторону по правилу, чтобы создать сопоставления запрос → провайдер.",
     "Pick or create both a store and a product before saving.": "Перед сохранением выберите или создайте и магазин, и продукт.",
     "Ping Interval (seconds)": "Интервал Ping (секунды)",
+    "Pinned": "Закреплено",
     "Plan": "План",
     "Plan ID": "ID плана",
     "Plan Name": "Название плана",

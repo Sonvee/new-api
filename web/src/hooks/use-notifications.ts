@@ -60,6 +60,28 @@ function getAnnouncementKey(item: Record<string, unknown>): string {
 }
 
 /**
+ * Sort announcements for notification display: pinned items first, then newest
+ * items within each group.
+ */
+export function sortAnnouncementsForDisplay(
+  announcements: Record<string, unknown>[]
+): Record<string, unknown>[] {
+  const sortedAnnouncements = [...announcements]
+  sortedAnnouncements.sort((a, b) => {
+    const aPinned = a.pinned === true
+    const bPinned = b.pinned === true
+    if (aPinned !== bPinned) return aPinned ? -1 : 1
+
+    const aPublishDate = Date.parse(String(a.publishDate ?? ''))
+    const bPublishDate = Date.parse(String(b.publishDate ?? ''))
+    const aTimestamp = Number.isNaN(aPublishDate) ? 0 : aPublishDate
+    const bTimestamp = Number.isNaN(bPublishDate) ? 0 : bPublishDate
+    return bTimestamp - aTimestamp
+  })
+  return sortedAnnouncements
+}
+
+/**
  * Hook to manage notifications (Notice + Announcements)
  * Provides unread counts and read status management
  */
@@ -85,10 +107,9 @@ export function useNotifications() {
   const announcementsEnabled = status?.announcements_enabled ?? false
   const announcements = useMemo<Record<string, unknown>[]>(() => {
     if (!announcementsEnabled) return []
-    return ((status?.announcements || []) as Record<string, unknown>[]).slice(
-      0,
-      20
-    )
+    return sortAnnouncementsForDisplay(
+      (status?.announcements || []) as Record<string, unknown>[]
+    ).slice(0, 20)
   }, [announcementsEnabled, status?.announcements])
 
   // Notification store

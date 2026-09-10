@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Plus, Trash2, Save } from 'lucide-react'
+import { Pin, Plus, Trash2, Save } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -72,6 +72,7 @@ type Announcement = {
   content: string
   publishDate: string
   type: 'default' | 'ongoing' | 'success' | 'warning' | 'error'
+  pinned: boolean
   extra?: string
 }
 
@@ -87,6 +88,7 @@ const announcementSchema = z.object({
     .max(500, 'Content must be less than 500 characters'),
   publishDate: z.string().min(1, 'Publish date is required'),
   type: z.enum(['default', 'ongoing', 'success', 'warning', 'error']),
+  pinned: z.boolean(),
   extra: z
     .string()
     .max(100, 'Extra must be less than 100 characters')
@@ -152,6 +154,7 @@ export function AnnouncementsSection({
       content: '',
       publishDate: new Date().toISOString(),
       type: 'default',
+      pinned: false,
       extra: '',
     },
   })
@@ -164,6 +167,7 @@ export function AnnouncementsSection({
           parsed.map((item, idx) => ({
             ...item,
             id: item.id || idx + 1,
+            pinned: item.pinned === true,
           }))
         )
       }
@@ -195,6 +199,7 @@ export function AnnouncementsSection({
       content: '',
       publishDate: new Date().toISOString(),
       type: 'default',
+      pinned: false,
       extra: '',
     })
     setShowDialog(true)
@@ -206,6 +211,7 @@ export function AnnouncementsSection({
       content: announcement.content,
       publishDate: announcement.publishDate,
       type: announcement.type,
+      pinned: announcement.pinned,
       extra: announcement.extra || '',
     })
     setShowDialog(true)
@@ -291,6 +297,10 @@ export function AnnouncementsSection({
 
   const sortedAnnouncements = useMemo(() => {
     return [...announcements].sort((a, b) => {
+      if (a.pinned !== b.pinned) {
+        return a.pinned ? -1 : 1
+      }
+
       return (
         new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime()
       )
@@ -396,6 +406,21 @@ export function AnnouncementsSection({
                   </span>
                 </div>
               ),
+            },
+            {
+              id: 'pinned',
+              header: t('Pinned'),
+              className: 'w-20',
+              cell: (announcement) =>
+                announcement.pinned ? (
+                  <span
+                    className='text-primary inline-flex items-center'
+                    aria-label={t('Pinned')}
+                    title={t('Pinned')}
+                  >
+                    <Pin aria-hidden='true' className='size-4' />
+                  </span>
+                ) : null,
             },
             {
               id: 'type',
@@ -560,6 +585,25 @@ export function AnnouncementsSection({
                     </SelectContent>
                   </Select>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='pinned'
+              render={({ field }) => (
+                <FormItem className='flex items-center gap-2'>
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={(checked) =>
+                        field.onChange(checked === true)
+                      }
+                    />
+                  </FormControl>
+                  <FormLabel className='cursor-pointer'>
+                    {t('Pinned')}
+                  </FormLabel>
                 </FormItem>
               )}
             />
