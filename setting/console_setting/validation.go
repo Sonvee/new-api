@@ -178,6 +178,11 @@ func validateAnnouncements(announcementsStr string) error {
 				}
 			}
 		}
+		if pinned, exists := ann["pinned"]; exists {
+			if _, ok := pinned.(bool); !ok {
+				return fmt.Errorf("第%d个公告的置顶字段值不合法", i+1)
+			}
+		}
 		if exceedsMaxCharacters(content, 500) {
 			return fmt.Errorf("第%d个公告的内容长度不能超过500字符", i+1)
 		}
@@ -228,11 +233,20 @@ func getPublishTime(item map[string]interface{}) time.Time {
 	return time.Time{}
 }
 
-func GetAnnouncements() []map[string]interface{} {
-	list := getJSONList(GetConsoleSetting().Announcements)
+func sortAnnouncements(list []map[string]interface{}) {
 	sort.SliceStable(list, func(i, j int) bool {
+		iPinned, _ := list[i]["pinned"].(bool)
+		jPinned, _ := list[j]["pinned"].(bool)
+		if iPinned != jPinned {
+			return iPinned
+		}
 		return getPublishTime(list[i]).After(getPublishTime(list[j]))
 	})
+}
+
+func GetAnnouncements() []map[string]interface{} {
+	list := getJSONList(GetConsoleSetting().Announcements)
+	sortAnnouncements(list)
 	return list
 }
 
