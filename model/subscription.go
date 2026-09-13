@@ -789,9 +789,17 @@ func PurchaseSubscriptionWithBalance(userId int, planId int) error {
 		if requiredQuota > 0 && user.Quota < requiredQuota {
 			return errors.New("余额不足")
 		}
+		tradeNo := fmt.Sprintf("SUBBALUSR%dNO%s%d", userId, common.GetRandomString(6), time.Now().UnixNano())
 		if requiredQuota > 0 {
 			if err := tx.Model(&User{}).Where("id = ?", userId).
 				Update("quota", gorm.Expr("quota - ?", requiredQuota)).Error; err != nil {
+				return err
+			}
+			if err := recordWalletLedgerTx(tx, userId, -requiredQuota, user.Quota, user.Quota-requiredQuota, WalletLedgerMeta{
+				Type:       WalletLedgerTypeSubscription,
+				SourceType: "subscription",
+				SourceId:   tradeNo,
+			}); err != nil {
 				return err
 			}
 		}
@@ -802,7 +810,6 @@ func PurchaseSubscriptionWithBalance(userId int, planId int) error {
 		}
 
 		now := common.GetTimestamp()
-		tradeNo := fmt.Sprintf("SUBBALUSR%dNO%s%d", userId, common.GetRandomString(6), time.Now().UnixNano())
 		order := &SubscriptionOrder{
 			UserId:          userId,
 			PlanId:          plan.Id,

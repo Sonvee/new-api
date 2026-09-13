@@ -121,28 +121,38 @@ func creditAffiliateUserQuota(
 	if err := common.ValidateWalletQuota(quota); err != nil {
 		return err
 	}
+
+	var user User
+	if err := lockForUpdate(tx).Select("id", "quota").First(&user, userID).Error; err != nil {
+		return err
+	}
+	if user.Quota > common.MaxWalletQuota-quota {
+		return ErrWalletQuotaLimitExceeded
+	}
 	updates := map[string]any{
 		"quota":       gorm.Expr("quota + ?", quota),
 		"aff_history": gorm.Expr("aff_history + ?", quota),
 	}
+	ledgerType := WalletLedgerTypeInvitationReward
 	if kind == affiliateCreditInvitation {
 		updates["aff_reward_quota"] = gorm.Expr("aff_reward_quota + ?", quota)
 	} else if kind == affiliateCreditCommission {
 		updates["aff_commission_quota"] = gorm.Expr("aff_commission_quota + ?", quota)
+		ledgerType = WalletLedgerTypeCommission
 	}
 
-	result := tx.Model(&User{}).
-		Where("id = ? AND quota <= ?", userID, common.MaxWalletQuota-quota).
-		Updates(updates)
+	result := tx.Model(&User{}).Where("id = ?", userID).Updates(updates)
 	if result.Error != nil {
 		return result.Error
 	}
-	if result.RowsAffected == 1 {
-		return nil
+	if result.RowsAffected != 1 {
+		return gorm.ErrRecordNotFound
 	}
-	return ErrWalletQuotaLimitExceeded
+	return recordWalletLedgerTx(tx, userID, quota, user.Quota, user.Quota+quota, WalletLedgerMeta{
+		Type:       ledgerType,
+		SourceType: "affiliate",
+	})
 }
-
 func processAffiliateQuotaCredit(tx *gorm.DB, userID int, creditedQuota int, paymentTopUp bool) (AffiliateCreditResult, error) {
 	result := AffiliateCreditResult{}
 	if !operation_setting.IsPaymentComplianceConfirmed() {

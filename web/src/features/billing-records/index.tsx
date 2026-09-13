@@ -13,18 +13,37 @@ GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
 */
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SectionPageLayout } from '@/components/layout'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+
+import { BillingRecordsTable } from './components/billing-records-table'
 
 export function BillingRecords() {
   const { t } = useTranslation()
+  const [activeTab, setActiveTab] = useState<'consumption' | 'ledger'>('consumption')
 
   return (
-    <SectionPageLayout>
+    <SectionPageLayout fixedContent>
       <SectionPageLayout.Title>{t('Billing Records')}</SectionPageLayout.Title>
-      <SectionPageLayout.Content />
+      <SectionPageLayout.Content>
+        <div className='flex h-full min-h-0 flex-col gap-4'>
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'consumption' | 'ledger')}>
+            <TabsList>
+              <TabsTrigger value='consumption'>{t('Consumption records')}</TabsTrigger>
+              <TabsTrigger value='ledger'>{t('Balance ledger')}</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <div className='min-h-0 flex-1'>
+            <BillingRecordsTable key={activeTab} kind={activeTab} />
+          </div>
+        </div>
+      </SectionPageLayout.Content>
     </SectionPageLayout>
   )
 }

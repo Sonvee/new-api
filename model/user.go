@@ -660,7 +660,17 @@ func (user *User) Insert(inviterId int) error {
 				user.SetSetting(defaultSetting)
 			}
 
-			return tx.Create(user).Error
+			if err := tx.Create(user).Error; err != nil {
+				return err
+			}
+			if user.Quota > 0 {
+				return recordWalletLedgerTx(tx, user.Id, user.Quota, 0, user.Quota, WalletLedgerMeta{
+					Type:       WalletLedgerTypeSystemGrant,
+					SourceType: "user_registration",
+					SourceId:   strconv.Itoa(user.Id),
+				})
+			}
+			return nil
 		})
 	}); err != nil {
 		return err
@@ -720,7 +730,17 @@ func (user *User) InsertWithTx(tx *gorm.DB, inviterId int) error {
 			user.SetSetting(defaultSetting)
 		}
 
-		return tx.Create(user).Error
+		if err := tx.Create(user).Error; err != nil {
+			return err
+		}
+		if user.Quota > 0 {
+			return recordWalletLedgerTx(tx, user.Id, user.Quota, 0, user.Quota, WalletLedgerMeta{
+				Type:       WalletLedgerTypeSystemGrant,
+				SourceType: "user_registration",
+				SourceId:   strconv.Itoa(user.Id),
+			})
+		}
+		return nil
 	})
 }
 
