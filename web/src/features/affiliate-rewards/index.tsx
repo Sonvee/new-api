@@ -25,6 +25,7 @@ import { getSelf } from '@/lib/api'
 
 import { useAffiliate } from '../wallet/hooks'
 import type { UserWalletData } from '../wallet/types'
+import { AffiliateRewardsInviteesCard } from './components/affiliate-rewards-invitees-card'
 import { AffiliateRewardsReferralCard } from './components/affiliate-rewards-referral-card'
 import { AffiliateRewardsStatsCard } from './components/affiliate-rewards-stats-card'
 
@@ -71,6 +72,7 @@ export function AffiliateRewards() {
                 config={user?.affiliate_rewards_config}
                 loading={affiliateLoading || userLoading}
               />
+              <AffiliateRewardsInviteesCard />
             </>
           )}
         </div>
