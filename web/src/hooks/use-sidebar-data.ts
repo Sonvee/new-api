@@ -23,6 +23,7 @@ import {
   CreditCard,
   FileText,
   FlaskConical,
+  Gift,
   Key,
   LayoutDashboard,
   ListTodo,
@@ -115,6 +116,11 @@ export function useSidebarData(): SidebarData {
             title: t('Wallet'),
             url: '/wallet',
             icon: Wallet,
+          },
+          {
+            title: t('Invitation Rewards'),
+            url: '/affiliate-rewards',
+            icon: Gift,
           },
           {
             title: t('Profile'),

@@ -80,6 +80,7 @@ export const SIDEBAR_MODULES_DEFAULT: SidebarModulesAdminConfig = {
     topup: true,
     personal: true,
     security: true,
+    affiliate: true,
   },
   admin: {
     enabled: true,

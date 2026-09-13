@@ -136,6 +136,10 @@ export function SidebarModulesSection({
         title: t('Security & Access'),
         description: t('Manage your security settings and account access'),
       },
+      affiliate: {
+        title: t('Invitation Rewards'),
+        description: t('Manage invitation rewards and referral earnings.'),
+      },
     },
     admin: {
       channel: {

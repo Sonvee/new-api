@@ -74,7 +74,7 @@ function sidebarFor(admin?: object, user?: object, canConfigure = true) {
 }
 
 describe('security sidebar visibility', () => {
-  it('old configurations show Security & Access immediately after Profile and keep API Keys', () => {
+  it('old configurations show Security & Access after Profile and keep API Keys', () => {
     const { result } = sidebarFor(
       { personal: { enabled: true, personal: true, topup: true } },
       { personal: { enabled: true, personal: true } }
@@ -83,7 +83,7 @@ describe('security sidebar visibility', () => {
       result.current
         .find((group) => group.id === 'personal')
         ?.items.map((item) => item.title)
-    ).toEqual(['Wallet', 'Profile', 'Security & Access'])
+    ).toEqual(['Wallet', 'Invitation Rewards', 'Profile', 'Security & Access'])
     expect(
       result.current
         .flatMap((group) => group.items)
@@ -118,6 +118,37 @@ describe('security sidebar visibility', () => {
         .some((item) => item.title === 'Security & Access')
     ).toBe(true)
   })
+})
+
+describe('affiliate rewards sidebar entry', () => {
+  it('legacy configurations show Invitation Rewards in the Personal section', () => {
+    const { result } = sidebarFor(
+      { personal: { enabled: true, topup: true, personal: true } },
+      { personal: { enabled: true, topup: true, personal: true } }
+    )
+    expect(
+      result.current
+        .find((group) => group.id === 'personal')
+        ?.items.map((item) => item.title)
+    ).toEqual(['Wallet', 'Invitation Rewards', 'Profile', 'Security & Access'])
+  })
+
+  it.each([
+    [{ personal: { enabled: true, affiliate: false } }, undefined],
+    [{ personal: { enabled: false } }, { personal: { affiliate: true } }],
+    [undefined, { personal: { enabled: true, affiliate: false } }],
+    [undefined, { personal: { enabled: false } }],
+  ])(
+    'admin or user disablement hides Invitation Rewards (%j, %j)',
+    (admin, user) => {
+      const { result } = sidebarFor(admin, user)
+      expect(
+        result.current
+          .flatMap((group) => group.items)
+          .some((item) => item.title === 'Invitation Rewards')
+      ).toBe(false)
+    }
+  )
 })
 
 describe('audit log sidebar entry', () => {
