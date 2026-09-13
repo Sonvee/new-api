@@ -237,8 +237,17 @@ export interface UserWalletData {
   aff_count: number
   /** Number of valid affiliate invites */
   aff_valid_count?: number
+  /** Current affiliate rewards configuration */
+  affiliate_rewards_config?: AffiliateRewardsConfig
   /** User group */
   group: string
+}
+
+export interface AffiliateRewardsConfig {
+  quota_for_inviter: number
+  quota_for_invitee: number
+  invitation_activation_threshold: number
+  commission_rate: number
 }
 
 /**

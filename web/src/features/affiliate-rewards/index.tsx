@@ -23,7 +23,9 @@ import { ErrorState } from '@/components/error-state'
 import { SectionPageLayout } from '@/components/layout'
 import { getSelf } from '@/lib/api'
 
+import { useAffiliate } from '../wallet/hooks'
 import type { UserWalletData } from '../wallet/types'
+import { AffiliateRewardsReferralCard } from './components/affiliate-rewards-referral-card'
 import { AffiliateRewardsStatsCard } from './components/affiliate-rewards-stats-card'
 
 export function AffiliateRewards() {
@@ -31,6 +33,7 @@ export function AffiliateRewards() {
   const [user, setUser] = useState<UserWalletData | null>(null)
   const [userLoading, setUserLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
+  const { affiliateLink, loading: affiliateLoading } = useAffiliate()
 
   const fetchUser = useCallback(async () => {
     try {
@@ -61,7 +64,14 @@ export function AffiliateRewards() {
           {loadError ? (
             <ErrorState onRetry={() => void fetchUser()} />
           ) : (
-            <AffiliateRewardsStatsCard user={user} loading={userLoading} />
+            <>
+              <AffiliateRewardsStatsCard user={user} loading={userLoading} />
+              <AffiliateRewardsReferralCard
+                affiliateLink={affiliateLink}
+                config={user?.affiliate_rewards_config}
+                loading={affiliateLoading || userLoading}
+              />
+            </>
           )}
         </div>
       </SectionPageLayout.Content>
