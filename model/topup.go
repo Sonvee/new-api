@@ -83,41 +83,41 @@ func ValidateTopUpQuotaCapacity(userId int, creditedQuota int) error {
 	return nil
 }
 
-// creditTopUpQuota atomically enforces the wallet ceiling while adding quota.
-// Keeping the predicate and increment in one UPDATE prevents two
-// concurrent callbacks from both passing a separate read/check.
-func creditTopUpQuota(tx *gorm.DB, userId int, creditedQuota int, updates map[string]any, paymentTopUp bool) (AffiliateCreditResult, error) {
+// creditTopUpQuota adds wallet quota and records the committed balance change.
+// The user row lock keeps the balance snapshot and ledger entry consistent.
+func creditTopUpQuota(tx *gorm.DB, userId int, creditedQuota int, updates map[string]any, paymentTopUp bool, ledgerMeta WalletLedgerMeta) (AffiliateCreditResult, error) {
 	var affiliateResult AffiliateCreditResult
 	maxCurrentQuota, err := topUpQuotaMaxCurrent(creditedQuota)
 	if err != nil {
 		return affiliateResult, err
 	}
 
+	var user User
+	if err := lockForUpdate(tx).First(&user, userId).Error; err != nil {
+		return affiliateResult, err
+	}
+	if user.Quota > maxCurrentQuota {
+		return affiliateResult, ErrTopUpQuotaLimitExceeded
+	}
+
 	updateFields := make(map[string]any, len(updates)+1)
 	maps.Copy(updateFields, updates)
 	updateFields["quota"] = gorm.Expr("quota + ?", creditedQuota)
-
-	result := tx.Model(&User{}).
-		Where("id = ? AND quota <= ?", userId, maxCurrentQuota).
-		Updates(updateFields)
+	result := tx.Model(&User{}).Where("id = ?", userId).Updates(updateFields)
 	if result.Error != nil {
 		return affiliateResult, result.Error
 	}
-	if result.RowsAffected == 1 {
-		affiliateResult, err = processAffiliateQuotaCredit(tx, userId, creditedQuota, paymentTopUp)
-		return affiliateResult, err
-	}
-
-	var count int64
-	if err := tx.Model(&User{}).Where("id = ?", userId).Count(&count).Error; err != nil {
-		return affiliateResult, err
-	}
-	if count == 0 {
+	if result.RowsAffected != 1 {
 		return affiliateResult, gorm.ErrRecordNotFound
 	}
-	return affiliateResult, ErrTopUpQuotaLimitExceeded
-}
 
+	after := user.Quota + creditedQuota
+	if err := recordWalletLedgerTx(tx, userId, creditedQuota, user.Quota, after, ledgerMeta); err != nil {
+		return affiliateResult, err
+	}
+	affiliateResult, err = processAffiliateQuotaCredit(tx, userId, creditedQuota, paymentTopUp)
+	return affiliateResult, err
+}
 func (topUp *TopUp) Update() error {
 	var err error
 	err = DB.Save(topUp).Error
@@ -217,7 +217,7 @@ func RechargeEpay(tradeNo string, actualPaymentMethod string, callerIp string) (
 		if err := tx.Save(topUp).Error; err != nil {
 			return err
 		}
-		affiliateResult, err = creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil, true)
+		affiliateResult, err = creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil, true, WalletLedgerMeta{Type: WalletLedgerTypeTopup, SourceType: "topup", SourceId: topUp.TradeNo})
 		return err
 	})
 	if err != nil {
@@ -281,7 +281,7 @@ func Recharge(referenceId string, customerId string, callerIp string) (err error
 		}
 		affiliateResult, err = creditTopUpQuota(tx, topUp.UserId, quota, map[string]any{
 			"stripe_customer": customerId,
-		}, true)
+		}, true, WalletLedgerMeta{Type: WalletLedgerTypeTopup, SourceType: "topup", SourceId: topUp.TradeNo})
 		return err
 	})
 
@@ -514,7 +514,7 @@ func ManualCompleteTopUp(tradeNo string, callerIp string) error {
 
 		// 增加用户额度（立即写库，保持一致性）
 		var creditErr error
-		affiliateResult, creditErr = creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil, false)
+		affiliateResult, creditErr = creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil, false, WalletLedgerMeta{Type: WalletLedgerTypeAdminTopup, SourceType: "topup", SourceId: topUp.TradeNo})
 		if creditErr != nil {
 			return creditErr
 		}
@@ -595,7 +595,7 @@ func RechargeCreem(referenceId string, customerEmail string, customerName string
 			}
 		}
 
-		affiliateResult, err = creditTopUpQuota(tx, topUp.UserId, quota, updateFields, true)
+		affiliateResult, err = creditTopUpQuota(tx, topUp.UserId, quota, updateFields, true, WalletLedgerMeta{Type: WalletLedgerTypeTopup, SourceType: "topup", SourceId: topUp.TradeNo})
 		return err
 	})
 
@@ -657,7 +657,7 @@ func RechargeWaffo(tradeNo string, callerIp string) (err error) {
 			return err
 		}
 
-		affiliateResult, err = creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil, true)
+		affiliateResult, err = creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil, true, WalletLedgerMeta{Type: WalletLedgerTypeTopup, SourceType: "topup", SourceId: topUp.TradeNo})
 		return err
 	})
 
@@ -721,7 +721,7 @@ func RechargeWaffoPancake(tradeNo string) (err error) {
 			return err
 		}
 
-		affiliateResult, err = creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil, true)
+		affiliateResult, err = creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil, true, WalletLedgerMeta{Type: WalletLedgerTypeTopup, SourceType: "topup", SourceId: topUp.TradeNo})
 		return err
 	})
 

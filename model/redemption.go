@@ -175,7 +175,7 @@ func Redeem(key string, userId int) (quota int, err error) {
 		if result.RowsAffected == 0 {
 			return errors.New("该兑换码已被使用")
 		}
-		_, err = creditTopUpQuota(tx, userId, redemption.Quota, nil, false)
+		_, err = creditTopUpQuota(tx, userId, redemption.Quota, nil, false, WalletLedgerMeta{Type: WalletLedgerTypeRedemption, SourceType: "redemption", SourceId: strconv.Itoa(redemption.Id)})
 		return err
 	})
 	if err != nil {
