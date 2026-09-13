@@ -42,6 +42,25 @@ func createUserBindTestUser(t *testing.T) User {
 	return user
 }
 
+func TestGetSelfUserByIdIncludesAffiliateAccounting(t *testing.T) {
+	setupUserUpdateTestState(t)
+
+	user := User{
+		Username:           "affiliate-accounting-user",
+		Password:           "password",
+		Status:             common.UserStatusEnabled,
+		Group:              "default",
+		AffRewardQuota:     125000,
+		AffCommissionQuota: 75000,
+	}
+	require.NoError(t, DB.Create(&user).Error)
+
+	loaded, err := GetSelfUserById(user.Id)
+	require.NoError(t, err)
+	assert.Equal(t, user.AffRewardQuota, loaded.AffRewardQuota)
+	assert.Equal(t, user.AffCommissionQuota, loaded.AffCommissionQuota)
+}
+
 func TestUserUpdateDoesNotOverwriteConcurrentAccountingOrTokenChanges(t *testing.T) {
 	setupUserUpdateTestState(t)
 

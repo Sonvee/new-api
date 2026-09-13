@@ -18,6 +18,12 @@ type AffiliateCreditResult struct {
 	Activated    bool
 }
 
+type AffiliateInvitee struct {
+	Username           string `json:"username"`
+	CreatedAt          int64  `json:"created_at"`
+	AffiliateActivated bool   `json:"affiliate_activated"`
+}
+
 type affiliateCreditKind uint8
 
 const (
@@ -85,6 +91,22 @@ func affiliateCommissionQuota(creditedQuota int) int {
 			Mul(decimal.NewFromInt(int64(common.CommissionRate))).
 			Div(decimal.NewFromInt(100)),
 	)
+}
+
+func GetAffiliateInvitees(inviterID, startIdx, pageSize int) ([]AffiliateInvitee, int64, error) {
+	invitees := make([]AffiliateInvitee, 0)
+	query := DB.Model(&User{}).Where("inviter_id = ?", inviterID)
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return invitees, 0, err
+	}
+
+	err := query.Select("username, created_at, affiliate_activated").
+		Order("created_at DESC, id DESC").
+		Limit(pageSize).
+		Offset(startIdx).
+		Find(&invitees).Error
+	return invitees, total, err
 }
 
 func creditAffiliateUserQuota(
