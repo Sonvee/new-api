@@ -36,6 +36,12 @@ const user: UserWalletData = {
   aff_commission_quota: 250000,
   aff_count: 12,
   aff_valid_count: 5,
+  affiliate_rewards_config: {
+    quota_for_inviter: 1000000,
+    quota_for_invitee: 2000000,
+    invitation_activation_threshold: 10000000,
+    commission_rate: 5,
+  },
   group: 'default',
 }
 
@@ -47,8 +53,10 @@ describe('affiliate rewards stats card', () => {
     expect(screen.getByText('Valid Invites')).toBeVisible()
     expect(screen.getByText('Invitation Rewards')).toBeVisible()
     expect(screen.getByText('Commission Rebates')).toBeVisible()
+    expect(screen.getByText('Commission Rate')).toBeVisible()
     expect(screen.getByText('12')).toBeVisible()
     expect(screen.getByText('5')).toBeVisible()
+    expect(screen.getByText('5%')).toBeVisible()
     expect(screen.getByText(formatQuota(user.aff_reward_quota))).toBeVisible()
     expect(
       screen.getByText(formatQuota(user.aff_commission_quota))
