@@ -844,6 +844,7 @@
     "Billing parameters": "計費參數",
     "Billing Path": "收費路徑",
     "Billing Process": "收費過程",
+    "Billing Records": "帳單記錄",
     "Billing rule: each call is billed as the token group (falling back to the user group when the token has none). The base ratio always comes from that billing group, not from the user group. To give a user group a special price on another billing group, add an entry in the override matrix.": "收費規則：每次呼叫按令牌分組收費（令牌未設定分組時回退到用戶分組）。基礎倍率始終取該收費分組的倍率，而不是用戶分組的倍率。若要讓某用戶分組在使用其他收費分組時享受特殊價格，請在覆蓋矩陣中添加條目。",
     "Billing Source": "收費來源",
     "Billing values must be finite and non-negative.": "計費數值必須是有限的非負數。",

@@ -844,6 +844,7 @@
     "Billing parameters": "課金パラメータ",
     "Billing Path": "課金パス",
     "Billing Process": "課金プロセス",
+    "Billing Records": "請求記録",
     "Billing rule: each call is billed as the token group (falling back to the user group when the token has none). The base ratio always comes from that billing group, not from the user group. To give a user group a special price on another billing group, add an entry in the override matrix.": "課金ルール：各呼び出しはトークングループとして課金されます（トークンにグループがない場合はユーザーグループにフォールバック）。基本倍率は常にその課金グループから取得され、ユーザーグループの倍率は適用されません。特定のユーザーグループに別の課金グループでの特別価格を設定するには、上書きマトリクスにエントリを追加してください。",
     "Billing Source": "課金ソース",
     "Billing values must be finite and non-negative.": "課金の値は有限の非負数である必要があります。",
