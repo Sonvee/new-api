@@ -68,6 +68,11 @@ func AdjustUserQuota(userID, operatorRole int, mode string, value int) (*UserQuo
 				return gorm.ErrRecordNotFound
 			}
 		}
+		if after > user.Quota {
+			if _, err := processAffiliateQuotaCredit(tx, userID, after-user.Quota, false); err != nil {
+				return err
+			}
+		}
 		adjustment = UserQuotaAdjustment{UserID: user.Id, Username: user.Username, Before: user.Quota, After: after}
 		return nil
 	})

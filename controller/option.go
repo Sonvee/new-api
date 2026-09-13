@@ -206,6 +206,18 @@ func UpdateOption(c *gin.Context) {
 			common.ApiErrorI18n(c, i18n.MsgPaymentComplianceRequired)
 			return
 		}
+	case "InvitationActivationThreshold":
+		value, err := strconv.Atoi(option.Value.(string))
+		if err != nil || value < 0 || value > common.MaxWalletQuota {
+			common.ApiErrorMsg(c, "邀请激活阈值必须在 0 到钱包额度上限之间")
+			return
+		}
+	case "CommissionRate":
+		value, err := strconv.Atoi(option.Value.(string))
+		if err != nil || value < 0 || value > 100 {
+			common.ApiErrorMsg(c, "佣金比率必须在 0 到 100 之间")
+			return
+		}
 	default:
 		if isPaymentComplianceOptionKey(option.Key) {
 			common.ApiErrorMsg(c, "合规确认字段不允许通过通用设置接口修改")
