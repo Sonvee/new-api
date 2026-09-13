@@ -16,25 +16,31 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Gift } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
+import { SettingsPage } from '../components/settings-page'
+import {
+  AffiliateRewardsSettingsSection,
+  type AffiliateRewardsFormValues,
+} from './affiliate-rewards-settings-section'
 
-import { EmptyState } from '@/components/empty-state'
-import { SectionPageLayout } from '@/components/layout'
+const defaultAffiliateRewardsSettings: AffiliateRewardsFormValues = {
+  QuotaForInviter: 0,
+  QuotaForInvitee: 0,
+  InvitationActivationThreshold: 10000000,
+  CommissionRate: 5,
+}
 
 export function AffiliateRewardsSettings() {
-  const { t } = useTranslation()
-
   return (
-    <SectionPageLayout>
-      <SectionPageLayout.Title>
-        {t('Invitation Rewards')}
-      </SectionPageLayout.Title>
-      <SectionPageLayout.Content>
-        <div className='mx-auto w-full max-w-7xl'>
-          <EmptyState icon={Gift} />
-        </div>
-      </SectionPageLayout.Content>
-    </SectionPageLayout>
+    <SettingsPage
+      routePath='/_authenticated/system-settings/billing/affiliate-rewards/'
+      defaultSettings={defaultAffiliateRewardsSettings}
+      defaultSection='affiliate-rewards'
+      getSectionContent={(_, settings) => (
+        <AffiliateRewardsSettingsSection
+          defaultValues={settings}
+        />
+      )}
+      getSectionMeta={() => ({ titleKey: 'Invitation Rewards' })}
+    />
   )
 }

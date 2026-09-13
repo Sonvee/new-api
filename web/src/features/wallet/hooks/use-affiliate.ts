@@ -16,16 +16,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import i18next from 'i18next'
 import { useState, useEffect, useCallback } from 'react'
-import { toast } from 'sonner'
 
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
-import { getSelf } from '@/lib/api'
 import { handleServerError } from '@/lib/handle-server-error'
 import { requireServerSuccess } from '@/lib/server-error-message'
 
-import { getAffiliateCode, transferAffiliateQuota } from '../api'
+import { getAffiliateCode } from '../api'
 import { generateAffiliateLink } from '../lib'
 
 // ============================================================================
@@ -36,7 +33,6 @@ export function useAffiliate() {
   const [affiliateCode, setAffiliateCode] = useState<string>('')
   const [affiliateLink, setAffiliateLink] = useState<string>('')
   const [loading, setLoading] = useState(true)
-  const [transferring, setTransferring] = useState(false)
   const { copyToClipboard } = useCopyToClipboard()
 
   // Fetch affiliate code
@@ -62,28 +58,6 @@ export function useAffiliate() {
     copyToClipboard(affiliateLink)
   }, [affiliateLink, copyToClipboard])
 
-  // Transfer affiliate quota to balance
-  const transferQuota = useCallback(async (quota: number): Promise<boolean> => {
-    try {
-      setTransferring(true)
-      const response = await transferAffiliateQuota({ quota })
-
-      if (response.success) {
-        toast.success(response.message || i18next.t('Transfer successful'))
-        await getSelf()
-        return true
-      }
-
-      handleServerError(response, i18next.t('Transfer failed'))
-      return false
-    } catch (_error) {
-      handleServerError(_error, i18next.t('Transfer failed'))
-      return false
-    } finally {
-      setTransferring(false)
-    }
-  }, [])
-
   useEffect(() => {
     fetchAffiliateCode()
   }, [fetchAffiliateCode])
@@ -92,9 +66,7 @@ export function useAffiliate() {
     affiliateCode,
     affiliateLink,
     loading,
-    transferring,
     copyAffiliateLink,
-    transferQuota,
     refetch: fetchAffiliateCode,
   }
 }

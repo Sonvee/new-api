@@ -86,10 +86,11 @@ func ValidateTopUpQuotaCapacity(userId int, creditedQuota int) error {
 // creditTopUpQuota atomically enforces the wallet ceiling while adding quota.
 // Keeping the predicate and increment in one UPDATE prevents two
 // concurrent callbacks from both passing a separate read/check.
-func creditTopUpQuota(tx *gorm.DB, userId int, creditedQuota int, updates map[string]any) error {
+func creditTopUpQuota(tx *gorm.DB, userId int, creditedQuota int, updates map[string]any, paymentTopUp bool) (AffiliateCreditResult, error) {
+	var affiliateResult AffiliateCreditResult
 	maxCurrentQuota, err := topUpQuotaMaxCurrent(creditedQuota)
 	if err != nil {
-		return err
+		return affiliateResult, err
 	}
 
 	updateFields := make(map[string]any, len(updates)+1)
@@ -100,20 +101,21 @@ func creditTopUpQuota(tx *gorm.DB, userId int, creditedQuota int, updates map[st
 		Where("id = ? AND quota <= ?", userId, maxCurrentQuota).
 		Updates(updateFields)
 	if result.Error != nil {
-		return result.Error
+		return affiliateResult, result.Error
 	}
 	if result.RowsAffected == 1 {
-		return nil
+		affiliateResult, err = processAffiliateQuotaCredit(tx, userId, creditedQuota, paymentTopUp)
+		return affiliateResult, err
 	}
 
 	var count int64
 	if err := tx.Model(&User{}).Where("id = ?", userId).Count(&count).Error; err != nil {
-		return err
+		return affiliateResult, err
 	}
 	if count == 0 {
-		return gorm.ErrRecordNotFound
+		return affiliateResult, gorm.ErrRecordNotFound
 	}
-	return ErrTopUpQuotaLimitExceeded
+	return affiliateResult, ErrTopUpQuotaLimitExceeded
 }
 
 func (topUp *TopUp) Update() error {
@@ -184,6 +186,7 @@ func RechargeEpay(tradeNo string, actualPaymentMethod string, callerIp string) (
 	}
 
 	var quotaToAdd int
+	var affiliateResult AffiliateCreditResult
 	topUp := &TopUp{}
 	err = DB.Transaction(func(tx *gorm.DB) error {
 		if err := lockForUpdate(tx).Where(refCol+" = ?", tradeNo).First(topUp).Error; err != nil {
@@ -214,7 +217,8 @@ func RechargeEpay(tradeNo string, actualPaymentMethod string, callerIp string) (
 		if err := tx.Save(topUp).Error; err != nil {
 			return err
 		}
-		return creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil)
+		affiliateResult, err = creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil, true)
+		return err
 	})
 	if err != nil {
 		if !errors.Is(err, ErrTopUpNotFound) && !errors.Is(err, ErrPaymentMethodMismatch) && !errors.Is(err, ErrTopUpStatusInvalid) {
@@ -226,6 +230,8 @@ func RechargeEpay(tradeNo string, actualPaymentMethod string, callerIp string) (
 		return true, nil
 	}
 	syncCreditUserQuotaCache(topUp.UserId, quotaToAdd, "epay topup")
+	syncCreditUserQuotaCache(affiliateResult.InviterID, affiliateResult.InviterQuota, "epay affiliate reward")
+	syncCreditUserQuotaCache(topUp.UserId, affiliateResult.InviteeQuota, "epay affiliate reward")
 
 	common.SysLog(fmt.Sprintf("易支付充值成功 trade_no=%s user_id=%d quota_to_add=%d money=%.2f", topUp.TradeNo, topUp.UserId, quotaToAdd, topUp.Money))
 	RecordTopupLog(topUp.UserId, fmt.Sprintf("使用在线充值成功，充值金额: %v，支付金额：%f", logger.LogQuota(quotaToAdd), topUp.Money), callerIp, topUp.PaymentMethod, PaymentProviderEpay)
@@ -238,6 +244,7 @@ func Recharge(referenceId string, customerId string, callerIp string) (err error
 	}
 
 	var quota int
+	var affiliateResult AffiliateCreditResult
 	topUp := &TopUp{}
 
 	refCol := "`trade_no`"
@@ -272,9 +279,10 @@ func Recharge(referenceId string, customerId string, callerIp string) (err error
 		if err != nil || quota <= 0 {
 			return ErrInvalidTopUpQuota
 		}
-		return creditTopUpQuota(tx, topUp.UserId, quota, map[string]any{
+		affiliateResult, err = creditTopUpQuota(tx, topUp.UserId, quota, map[string]any{
 			"stripe_customer": customerId,
-		})
+		}, true)
+		return err
 	})
 
 	if err != nil {
@@ -282,6 +290,8 @@ func Recharge(referenceId string, customerId string, callerIp string) (err error
 		return errors.New("充值失败，请稍后重试")
 	}
 	syncCreditUserQuotaCache(topUp.UserId, quota, "stripe topup")
+	syncCreditUserQuotaCache(affiliateResult.InviterID, affiliateResult.InviterQuota, "stripe affiliate reward")
+	syncCreditUserQuotaCache(topUp.UserId, affiliateResult.InviteeQuota, "stripe affiliate reward")
 
 	RecordTopupLog(topUp.UserId, fmt.Sprintf("使用在线充值成功，充值金额: %v，支付金额：%d", logger.FormatQuota(quota), topUp.Amount), callerIp, topUp.PaymentMethod, PaymentMethodStripe)
 
@@ -458,6 +468,7 @@ func ManualCompleteTopUp(tradeNo string, callerIp string) error {
 
 	var userId int
 	var quotaToAdd int
+	var affiliateResult AffiliateCreditResult
 	var payMoney float64
 	var paymentMethod string
 
@@ -502,8 +513,10 @@ func ManualCompleteTopUp(tradeNo string, callerIp string) error {
 		}
 
 		// 增加用户额度（立即写库，保持一致性）
-		if err := creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil); err != nil {
-			return err
+		var creditErr error
+		affiliateResult, creditErr = creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil, false)
+		if creditErr != nil {
+			return creditErr
 		}
 
 		userId = topUp.UserId
@@ -518,6 +531,8 @@ func ManualCompleteTopUp(tradeNo string, callerIp string) error {
 
 	// 事务外记录日志，避免阻塞
 	syncCreditUserQuotaCache(userId, quotaToAdd, "manual topup")
+	syncCreditUserQuotaCache(affiliateResult.InviterID, affiliateResult.InviterQuota, "manual affiliate reward")
+	syncCreditUserQuotaCache(userId, affiliateResult.InviteeQuota, "manual affiliate reward")
 	RecordTopupLog(userId, fmt.Sprintf("管理员补单成功，充值金额: %v，支付金额：%f", logger.FormatQuota(quotaToAdd), payMoney), callerIp, paymentMethod, "admin")
 	return nil
 }
@@ -527,6 +542,7 @@ func RechargeCreem(referenceId string, customerEmail string, customerName string
 	}
 
 	var quota int
+	var affiliateResult AffiliateCreditResult
 	topUp := &TopUp{}
 
 	refCol := "`trade_no`"
@@ -579,7 +595,8 @@ func RechargeCreem(referenceId string, customerEmail string, customerName string
 			}
 		}
 
-		return creditTopUpQuota(tx, topUp.UserId, quota, updateFields)
+		affiliateResult, err = creditTopUpQuota(tx, topUp.UserId, quota, updateFields, true)
+		return err
 	})
 
 	if err != nil {
@@ -587,6 +604,8 @@ func RechargeCreem(referenceId string, customerEmail string, customerName string
 		return errors.New("充值失败，请稍后重试")
 	}
 	syncCreditUserQuotaCache(topUp.UserId, quota, "creem topup")
+	syncCreditUserQuotaCache(affiliateResult.InviterID, affiliateResult.InviterQuota, "creem affiliate reward")
+	syncCreditUserQuotaCache(topUp.UserId, affiliateResult.InviteeQuota, "creem affiliate reward")
 
 	RecordTopupLog(topUp.UserId, fmt.Sprintf("使用Creem充值成功，充值额度: %v，支付金额：%.2f", quota, topUp.Money), callerIp, topUp.PaymentMethod, PaymentMethodCreem)
 
@@ -599,6 +618,7 @@ func RechargeWaffo(tradeNo string, callerIp string) (err error) {
 	}
 
 	var quotaToAdd int
+	var affiliateResult AffiliateCreditResult
 	topUp := &TopUp{}
 
 	refCol := "`trade_no`"
@@ -637,7 +657,8 @@ func RechargeWaffo(tradeNo string, callerIp string) (err error) {
 			return err
 		}
 
-		return creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil)
+		affiliateResult, err = creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil, true)
+		return err
 	})
 
 	if err != nil {
@@ -645,6 +666,8 @@ func RechargeWaffo(tradeNo string, callerIp string) (err error) {
 		return errors.New("充值失败，请稍后重试")
 	}
 	syncCreditUserQuotaCache(topUp.UserId, quotaToAdd, "waffo topup")
+	syncCreditUserQuotaCache(affiliateResult.InviterID, affiliateResult.InviterQuota, "waffo affiliate reward")
+	syncCreditUserQuotaCache(topUp.UserId, affiliateResult.InviteeQuota, "waffo affiliate reward")
 
 	if quotaToAdd > 0 {
 		RecordTopupLog(topUp.UserId, fmt.Sprintf("Waffo充值成功，充值额度: %v，支付金额: %.2f", logger.FormatQuota(quotaToAdd), topUp.Money), callerIp, topUp.PaymentMethod, PaymentMethodWaffo)
@@ -659,6 +682,7 @@ func RechargeWaffoPancake(tradeNo string) (err error) {
 	}
 
 	var quotaToAdd int
+	var affiliateResult AffiliateCreditResult
 	topUp := &TopUp{}
 
 	refCol := "`trade_no`"
@@ -697,7 +721,8 @@ func RechargeWaffoPancake(tradeNo string) (err error) {
 			return err
 		}
 
-		return creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil)
+		affiliateResult, err = creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil, true)
+		return err
 	})
 
 	if err != nil {
@@ -705,6 +730,8 @@ func RechargeWaffoPancake(tradeNo string) (err error) {
 		return errors.New("充值失败，请稍后重试")
 	}
 	syncCreditUserQuotaCache(topUp.UserId, quotaToAdd, "waffo pancake topup")
+	syncCreditUserQuotaCache(affiliateResult.InviterID, affiliateResult.InviterQuota, "waffo pancake affiliate reward")
+	syncCreditUserQuotaCache(topUp.UserId, affiliateResult.InviteeQuota, "waffo pancake affiliate reward")
 
 	if quotaToAdd > 0 {
 		RecordLog(topUp.UserId, LogTypeTopup, fmt.Sprintf("Waffo Pancake充值成功，充值额度: %v，支付金额: %.2f", logger.FormatQuota(quotaToAdd), topUp.Money))
