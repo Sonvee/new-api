@@ -101,6 +101,8 @@ type User struct {
 	AffCount             int                        `json:"aff_count" gorm:"type:int;default:0;column:aff_count"`
 	AffQuota             int                        `json:"aff_quota" gorm:"type:int;default:0;column:aff_quota"`           // 邀请剩余额度
 	AffHistoryQuota      int                        `json:"aff_history_quota" gorm:"type:int;default:0;column:aff_history"` // 邀请历史额度
+	AffRewardQuota       int                        `json:"aff_reward_quota" gorm:"type:int;default:0;column:aff_reward_quota"`
+	AffCommissionQuota   int                        `json:"aff_commission_quota" gorm:"type:int;default:0;column:aff_commission_quota"`
 	AffValidCount        int                        `json:"aff_valid_count" gorm:"type:int;default:0;column:aff_valid_count"`
 	InviterId            int                        `json:"inviter_id" gorm:"type:int;column:inviter_id;index"`
 	AffiliateActivated   bool                       `json:"affiliate_activated" gorm:"default:false;column:affiliate_activated"`
