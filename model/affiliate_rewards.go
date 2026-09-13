@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const affiliateRewardMigrationVersion = "1"
+const affiliateRewardMigrationVersion = "2"
 
 type AffiliateCreditResult struct {
 	InviterID    int
@@ -17,6 +17,13 @@ type AffiliateCreditResult struct {
 	InviteeQuota int
 	Activated    bool
 }
+
+type affiliateCreditKind uint8
+
+const (
+	affiliateCreditInvitation affiliateCreditKind = iota + 1
+	affiliateCreditCommission
+)
 
 // migrateAffiliateRewardHistory keeps pre-existing invitation accounting on
 // the old path while making new invitation relations use the new activation
@@ -58,6 +65,13 @@ func migrateAffiliateRewardHistory() error {
 		}).Error; err != nil {
 			return err
 		}
+		if err := tx.Model(&User{}).
+			Where("aff_history > ? AND aff_reward_quota = ?", 0, 0).
+			Updates(map[string]any{
+				"aff_reward_quota": gorm.Expr("aff_history"),
+			}).Error; err != nil {
+			return err
+		}
 		return tx.Save(&Option{Key: "AffiliateRewardsMigrationVersion", Value: affiliateRewardMigrationVersion}).Error
 	})
 }
@@ -73,19 +87,31 @@ func affiliateCommissionQuota(creditedQuota int) int {
 	)
 }
 
-func creditAffiliateUserQuota(tx *gorm.DB, userID int, quota int) error {
+func creditAffiliateUserQuota(
+	tx *gorm.DB,
+	userID int,
+	quota int,
+	kind affiliateCreditKind,
+) error {
 	if quota <= 0 {
 		return nil
 	}
 	if err := common.ValidateWalletQuota(quota); err != nil {
 		return err
 	}
+	updates := map[string]any{
+		"quota":       gorm.Expr("quota + ?", quota),
+		"aff_history": gorm.Expr("aff_history + ?", quota),
+	}
+	if kind == affiliateCreditInvitation {
+		updates["aff_reward_quota"] = gorm.Expr("aff_reward_quota + ?", quota)
+	} else if kind == affiliateCreditCommission {
+		updates["aff_commission_quota"] = gorm.Expr("aff_commission_quota + ?", quota)
+	}
+
 	result := tx.Model(&User{}).
 		Where("id = ? AND quota <= ?", userID, common.MaxWalletQuota-quota).
-		Updates(map[string]any{
-			"quota":       gorm.Expr("quota + ?", quota),
-			"aff_history": gorm.Expr("aff_history + ?", quota),
-		})
+		Updates(updates)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -127,13 +153,33 @@ func processAffiliateQuotaCredit(tx *gorm.DB, userID int, creditedQuota int, pay
 		result.InviterID = invitee.InviterId
 		result.InviterQuota = common.QuotaForInviter
 		result.InviteeQuota = common.QuotaForInvitee
+		commissionQuota := 0
 		if paymentTopUp {
-			result.InviterQuota += affiliateCommissionQuota(creditedQuota)
+			commissionQuota = affiliateCommissionQuota(creditedQuota)
+			result.InviterQuota += commissionQuota
 		}
-		if err := creditAffiliateUserQuota(tx, invitee.Id, result.InviteeQuota); err != nil {
+		if err := creditAffiliateUserQuota(
+			tx,
+			invitee.Id,
+			result.InviteeQuota,
+			affiliateCreditInvitation,
+		); err != nil {
 			return result, err
 		}
-		if err := creditAffiliateUserQuota(tx, invitee.InviterId, result.InviterQuota); err != nil {
+		if err := creditAffiliateUserQuota(
+			tx,
+			invitee.InviterId,
+			common.QuotaForInviter,
+			affiliateCreditInvitation,
+		); err != nil {
+			return result, err
+		}
+		if err := creditAffiliateUserQuota(
+			tx,
+			invitee.InviterId,
+			commissionQuota,
+			affiliateCreditCommission,
+		); err != nil {
 			return result, err
 		}
 		return result, nil
@@ -142,7 +188,12 @@ func processAffiliateQuotaCredit(tx *gorm.DB, userID int, creditedQuota int, pay
 	if paymentTopUp {
 		result.InviterID = invitee.InviterId
 		result.InviterQuota = affiliateCommissionQuota(creditedQuota)
-		if err := creditAffiliateUserQuota(tx, result.InviterID, result.InviterQuota); err != nil {
+		if err := creditAffiliateUserQuota(
+			tx,
+			result.InviterID,
+			result.InviterQuota,
+			affiliateCreditCommission,
+		); err != nil {
 			return result, err
 		}
 	}

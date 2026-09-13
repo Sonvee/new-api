@@ -229,6 +229,10 @@ export interface UserWalletData {
   aff_quota: number
   /** Total affiliate quota earned (historical) */
   aff_history_quota: number
+  /** Total fixed invitation rewards credited */
+  aff_reward_quota: number
+  /** Total commission rebates credited */
+  aff_commission_quota: number
   /** Number of successful affiliate invites */
   aff_count: number
   /** Number of valid affiliate invites */

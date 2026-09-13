@@ -16,14 +16,40 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Gift } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { EmptyState } from '@/components/empty-state'
+import { ErrorState } from '@/components/error-state'
 import { SectionPageLayout } from '@/components/layout'
+import { getSelf } from '@/lib/api'
+
+import type { UserWalletData } from '../wallet/types'
+import { AffiliateRewardsStatsCard } from './components/affiliate-rewards-stats-card'
 
 export function AffiliateRewards() {
   const { t } = useTranslation()
+  const [user, setUser] = useState<UserWalletData | null>(null)
+  const [userLoading, setUserLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+
+  const fetchUser = useCallback(async () => {
+    try {
+      setUserLoading(true)
+      setLoadError(false)
+      const response = await getSelf()
+      if (response.success && response.data) {
+        setUser(response.data as UserWalletData)
+      }
+    } catch {
+      setLoadError(true)
+    } finally {
+      setUserLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void fetchUser()
+  }, [fetchUser])
 
   return (
     <SectionPageLayout>
@@ -31,8 +57,12 @@ export function AffiliateRewards() {
         {t('Invitation Rewards')}
       </SectionPageLayout.Title>
       <SectionPageLayout.Content>
-        <div className='mx-auto w-full max-w-7xl'>
-          <EmptyState icon={Gift} />
+        <div className='mx-auto flex w-full max-w-7xl flex-col gap-4 sm:gap-5'>
+          {loadError ? (
+            <ErrorState onRetry={() => void fetchUser()} />
+          ) : (
+            <AffiliateRewardsStatsCard user={user} loading={userLoading} />
+          )}
         </div>
       </SectionPageLayout.Content>
     </SectionPageLayout>
