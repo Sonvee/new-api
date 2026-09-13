@@ -43,17 +43,22 @@ export function AffiliateRewardsStatsCard(
 
   if (props.loading) {
     return (
-      <div className='grid grid-cols-2 overflow-hidden rounded-xl border lg:grid-cols-4'>
-        {['invites', 'valid-invites', 'rewards', 'commission'].map((key) => (
+      <div className='grid grid-cols-2 overflow-hidden rounded-xl border lg:grid-cols-5'>
+        {[
+          'invites',
+          'valid-invites',
+          'rewards',
+          'commission',
+          'commission-rate',
+        ].map((key, index) => (
           <div
             key={key}
             className={cn(
               'min-w-0 px-3 py-3 sm:px-5 sm:py-4',
-              key === 'invites' && 'border-r border-b',
-              key === 'valid-invites' && 'border-b',
-              key === 'rewards' && 'border-r',
+              index % 2 === 0 && index < 4 && 'border-r',
+              index < 3 && 'border-b',
               'lg:border-r lg:border-b-0',
-              key === 'commission' && 'lg:border-r-0'
+              index === 4 && 'lg:border-r-0'
             )}
           >
             <Skeleton className='h-3.5 w-24' />
@@ -100,17 +105,24 @@ export function AffiliateRewardsStatsCard(
       icon: BadgeDollarSign,
       tone: 'chart-4',
     },
+    {
+      label: t('Commission Rate'),
+      value: `${props.user?.affiliate_rewards_config?.commission_rate ?? 0}%`,
+      description: t('Commission credited from paid top-ups'),
+      icon: BadgeDollarSign,
+      tone: 'chart-5',
+    },
   ]
 
   return (
-    <div className='bg-card/50 grid grid-cols-2 overflow-hidden rounded-xl border lg:grid-cols-4'>
+    <div className='bg-card/50 grid grid-cols-2 overflow-hidden rounded-xl border lg:grid-cols-5'>
       {stats.map((item, index) => (
         <div
           key={item.label}
           className={cn(
             'min-w-0 px-3 py-3 sm:px-5 sm:py-4',
-            index % 2 === 0 && 'border-r',
-            index < 2 && 'border-b',
+            index % 2 === 0 && index < stats.length - 1 && 'border-r',
+            index < stats.length - 2 && 'border-b',
             'lg:border-r lg:border-b-0',
             index === stats.length - 1 && 'lg:border-r-0'
           )}
