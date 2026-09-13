@@ -805,6 +805,7 @@
     "Billing parameters": "Billing parameters",
     "Billing Path": "Billing Path",
     "Billing Process": "Billing Process",
+    "Billing Records": "Billing Records",
     "Billing rule: each call is billed as the token group (falling back to the user group when the token has none). The base ratio always comes from that billing group, not from the user group. To give a user group a special price on another billing group, add an entry in the override matrix.": "Billing rule: each call is billed as the token group (falling back to the user group when the token has none). The base ratio always comes from that billing group, not from the user group. To give a user group a special price on another billing group, add an entry in the override matrix.",
     "Billing Source": "Billing Source",
     "Billing values must be finite and non-negative.": "Billing values must be finite and non-negative.",

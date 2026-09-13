@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Link } from '@tanstack/react-router'
-import { X, User, Wallet, LogOut, ShieldCheck } from 'lucide-react'
+import { X, User, Wallet, LogOut, Receipt, ShieldCheck } from 'lucide-react'
 import { AnimatePresence, motion, type Variants } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 
@@ -83,6 +83,7 @@ function MobileUserProfile({ user, onNavigate }: MobileUserProfileProps) {
   const [signOutOpen, setSignOutOpen] = useDialogState()
   const { displayName, initials, roleLabel } = useUserDisplay(user)
   const isSecurityVisible = useIsSidebarModuleVisible('/security')
+  const isBillingRecordsVisible = useIsSidebarModuleVisible('/billing-records')
 
   if (!user) return null
 
@@ -143,6 +144,17 @@ function MobileUserProfile({ user, onNavigate }: MobileUserProfileProps) {
           <Wallet className='size-4' />
           {t('Wallet')}
         </Link>
+
+        {isBillingRecordsVisible && (
+          <Link
+            to='/billing-records'
+            onClick={onNavigate}
+            className='text-primary/60 hover:text-primary/80 border-border flex items-center gap-2.5 border-b p-2.5 transition-colors'
+          >
+            <Receipt className='size-4' />
+            {t('Billing Records')}
+          </Link>
+        )}
 
         {/* Sign out - consistent style */}
         <Button

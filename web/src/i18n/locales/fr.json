@@ -805,6 +805,7 @@
     "Billing parameters": "Paramètres de facturation",
     "Billing Path": "Chemin de facturation",
     "Billing Process": "Processus de facturation",
+    "Billing Records": "Historique de facturation",
     "Billing rule: each call is billed as the token group (falling back to the user group when the token has none). The base ratio always comes from that billing group, not from the user group. To give a user group a special price on another billing group, add an entry in the override matrix.": "Règle de facturation : chaque appel est facturé selon le groupe du jeton (à défaut, le groupe de l’utilisateur). Le taux de base provient toujours de ce groupe de facturation, pas du groupe de l’utilisateur. Pour accorder à un groupe d’utilisateurs un tarif spécial sur un autre groupe de facturation, ajoutez une entrée dans la matrice de remplacement.",
     "Billing Source": "Source de facturation",
     "Billing values must be finite and non-negative.": "Les valeurs de facturation doivent être finies et positives ou nulles.",

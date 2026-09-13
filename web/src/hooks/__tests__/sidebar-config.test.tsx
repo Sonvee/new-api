@@ -83,7 +83,13 @@ describe('security sidebar visibility', () => {
       result.current
         .find((group) => group.id === 'personal')
         ?.items.map((item) => item.title)
-    ).toEqual(['Wallet', 'Invitation Rewards', 'Profile', 'Security & Access'])
+    ).toEqual([
+      'Wallet',
+      'Billing Records',
+      'Invitation Rewards',
+      'Profile',
+      'Security & Access',
+    ])
     expect(
       result.current
         .flatMap((group) => group.items)
@@ -130,7 +136,13 @@ describe('affiliate rewards sidebar entry', () => {
       result.current
         .find((group) => group.id === 'personal')
         ?.items.map((item) => item.title)
-    ).toEqual(['Wallet', 'Invitation Rewards', 'Profile', 'Security & Access'])
+    ).toEqual([
+      'Wallet',
+      'Billing Records',
+      'Invitation Rewards',
+      'Profile',
+      'Security & Access',
+    ])
   })
 
   it.each([
@@ -149,6 +161,28 @@ describe('affiliate rewards sidebar entry', () => {
       ).toBe(false)
     }
   )
+})
+
+describe('billing records sidebar entry', () => {
+  it('shows Billing Records by default and hides it when disabled', () => {
+    const visible = sidebarFor({
+      personal: { enabled: true, billing: true },
+    })
+    expect(
+      visible.result.current
+        .find((group) => group.id === 'personal')
+        ?.items.map((item) => item.title)
+    ).toContain('Billing Records')
+
+    const hidden = sidebarFor({
+      personal: { enabled: true, billing: false },
+    })
+    expect(
+      hidden.result.current
+        .flatMap((group) => group.items)
+        .some((item) => item.title === 'Billing Records')
+    ).toBe(false)
+  })
 })
 
 describe('audit log sidebar entry', () => {

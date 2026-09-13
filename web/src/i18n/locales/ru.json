@@ -805,6 +805,7 @@
     "Billing parameters": "Параметры тарификации",
     "Billing Path": "Путь тарификации",
     "Billing Process": "Процесс тарификации",
+    "Billing Records": "История платежей",
     "Billing rule: each call is billed as the token group (falling back to the user group when the token has none). The base ratio always comes from that billing group, not from the user group. To give a user group a special price on another billing group, add an entry in the override matrix.": "Правило тарификации: каждый вызов тарифицируется по группе токена (если у токена нет группы — по группе пользователя). Базовый коэффициент всегда берётся из этой тарифной группы, а не из группы пользователя. Чтобы задать группе пользователей особую цену для другой тарифной группы, добавьте запись в матрицу переопределений.",
     "Billing Source": "Источник биллинга",
     "Billing values must be finite and non-negative.": "Значения для расчёта стоимости должны быть конечными и неотрицательными.",

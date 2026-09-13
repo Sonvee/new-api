@@ -805,6 +805,7 @@
     "Billing parameters": "Tham số tính phí",
     "Billing Path": "Đường dẫn tính phí",
     "Billing Process": "Quá trình tính phí",
+    "Billing Records": "Lịch sử thanh toán",
     "Billing rule: each call is billed as the token group (falling back to the user group when the token has none). The base ratio always comes from that billing group, not from the user group. To give a user group a special price on another billing group, add an entry in the override matrix.": "Quy tắc tính phí: mỗi cuộc gọi được tính phí theo nhóm token (nếu token không có nhóm thì dùng nhóm người dùng). Hệ số cơ bản luôn lấy từ nhóm tính phí đó, không phải từ nhóm người dùng. Để cho một nhóm người dùng giá đặc biệt trên nhóm tính phí khác, hãy thêm mục vào ma trận ghi đè.",
     "Billing Source": "Nguồn thanh toán",
     "Billing values must be finite and non-negative.": "Giá trị tính phí phải hữu hạn và không âm.",
