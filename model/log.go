@@ -383,20 +383,18 @@ func RecordConsumeLog(c *gin.Context, userId int, params RecordConsumeLogParams)
 	if err != nil {
 		logger.LogError(c, "failed to record log: "+err.Error())
 	}
-	if common.DataExportEnabled {
-		LogQuotaData(QuotaDataLogParams{
-			UserID:    userId,
-			Username:  username,
-			ModelName: params.ModelName,
-			Quota:     params.Quota,
-			CreatedAt: createdAt,
-			TokenUsed: params.PromptTokens + params.CompletionTokens,
-			UseGroup:  params.Group,
-			TokenID:   params.TokenId,
-			ChannelID: params.ChannelId,
-			NodeName:  common.NodeName,
-		})
-	}
+	LogQuotaData(QuotaDataLogParams{
+		UserID:    userId,
+		Username:  username,
+		ModelName: params.ModelName,
+		Quota:     params.Quota,
+		CreatedAt: createdAt,
+		TokenUsed: params.PromptTokens + params.CompletionTokens,
+		UseGroup:  params.Group,
+		TokenID:   params.TokenId,
+		ChannelID: params.ChannelId,
+		NodeName:  common.NodeName,
+	})
 }
 
 type RecordTaskBillingLogParams struct {
@@ -442,7 +440,7 @@ func RecordTaskBillingLog(params RecordTaskBillingLogParams) {
 	if err != nil {
 		common.SysLog("failed to record task billing log: " + err.Error())
 	}
-	if params.LogType == LogTypeConsume && common.DataExportEnabled {
+	if params.LogType == LogTypeConsume {
 		nodeName := params.NodeName
 		if nodeName == "" {
 			nodeName = common.NodeName
