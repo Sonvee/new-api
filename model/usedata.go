@@ -40,10 +40,8 @@ type QuotaDataLogParams struct {
 
 func UpdateQuotaData() {
 	for {
-		if common.DataExportEnabled {
-			common.SysLog("正在更新数据看板数据...")
-			SaveQuotaDataCache()
-		}
+		common.SysLog("正在更新数据看板数据...")
+		SaveQuotaDataCache()
 		time.Sleep(time.Duration(common.DataExportInterval) * time.Minute)
 	}
 }
@@ -168,6 +166,15 @@ func GetQuotaDataGroupByUser(startTime int64, endTime int64) (quotaData []*Quota
 		Group("username, created_at").
 		Find(&quotaDatas).Error
 	return quotaDatas, err
+}
+
+func GetTotalQuotaDataTokens(startTime int64, endTime int64) (int64, error) {
+	var totalTokens int64
+	err := DB.Table("quota_data").
+		Select("COALESCE(SUM(token_used), 0)").
+		Where("created_at >= ? AND created_at < ?", startTime, endTime).
+		Scan(&totalTokens).Error
+	return totalTokens, err
 }
 
 func GetAllQuotaDates(startTime int64, endTime int64, username string) (quotaData []*QuotaData, err error) {

@@ -286,6 +286,11 @@ func SetApiRouter(router *gin.Engine) {
 			tokenRoute.POST("/batch/keys", middleware.CriticalRateLimit(), middleware.DisableCache(), controller.GetTokenKeysBatch)
 		}
 
+		publicUsageRoute := apiRouter.Group("/public/usage")
+		{
+			publicUsageRoute.GET("/tokens", controller.GetPublicTokenUsage)
+		}
+
 		usageRoute := apiRouter.Group("/usage")
 		usageRoute.Use(middleware.CORS(), middleware.CriticalRateLimit())
 		{
