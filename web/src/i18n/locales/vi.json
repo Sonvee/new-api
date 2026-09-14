@@ -6548,6 +6548,14 @@
     "Search by ledger or source number...": "Tìm theo số giao dịch hoặc số nguồn...",
     "Failed to load billing records": "Không thể tải lịch sử thanh toán",
     "Start date": "Ngày bắt đầu",
-    "End date": "Ngày kết thúc"
+    "End date": "Ngày kết thúc",
+    "Clean up": "Dọn dẹp",
+    "Clean up invalid subscriptions": "Dọn dẹp gói đăng ký không hợp lệ",
+    "Cleaned up {{count}} invalid subscriptions": "Đã dọn dẹp {{count}} gói đăng ký không hợp lệ",
+    "Expired and cancelled subscriptions will be permanently deleted. Continue?": "Các gói đăng ký đã hết hạn và đã hủy sẽ bị xóa vĩnh viễn. Tiếp tục?",
+    "Move subscription down": "Đưa gói đăng ký xuống",
+    "Move subscription up": "Đưa gói đăng ký lên",
+    "Refresh subscriptions": "Làm mới gói đăng ký",
+    "Subscription order updated": "Đã cập nhật thứ tự gói đăng ký"
   }
 }

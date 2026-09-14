@@ -6548,6 +6548,14 @@
     "Search by ledger or source number...": "Search by ledger or source number...",
     "Failed to load billing records": "Failed to load billing records",
     "Start date": "Start date",
-    "End date": "End date"
+    "End date": "End date",
+    "Clean up": "Clean up",
+    "Clean up invalid subscriptions": "Clean up invalid subscriptions",
+    "Cleaned up {{count}} invalid subscriptions": "Cleaned up {{count}} invalid subscriptions",
+    "Expired and cancelled subscriptions will be permanently deleted. Continue?": "Expired and cancelled subscriptions will be permanently deleted. Continue?",
+    "Move subscription down": "Move subscription down",
+    "Move subscription up": "Move subscription up",
+    "Refresh subscriptions": "Refresh subscriptions",
+    "Subscription order updated": "Subscription order updated"
   }
 }

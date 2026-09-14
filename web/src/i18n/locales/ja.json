@@ -6548,6 +6548,14 @@
     "Search by ledger or source number...": "履歴番号または参照番号で検索...",
     "Failed to load billing records": "請求記録の読み込みに失敗しました",
     "Start date": "開始日",
-    "End date": "終了日"
+    "End date": "終了日",
+    "Clean up": "クリーンアップ",
+    "Clean up invalid subscriptions": "無効なサブスクリプションをクリーンアップ",
+    "Cleaned up {{count}} invalid subscriptions": "{{count}} 件の無効なサブスクリプションをクリーンアップしました",
+    "Expired and cancelled subscriptions will be permanently deleted. Continue?": "期限切れおよびキャンセル済みのサブスクリプションは完全に削除されます。続行しますか？",
+    "Move subscription down": "サブスクリプションを下へ移動",
+    "Move subscription up": "サブスクリプションを上へ移動",
+    "Refresh subscriptions": "サブスクリプションを更新",
+    "Subscription order updated": "サブスクリプションの順序を更新しました"
   }
 }
