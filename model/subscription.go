@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"sync"
@@ -249,6 +250,29 @@ func GetSubscriptionOrderByTradeNo(tradeNo string) *SubscriptionOrder {
 	return &order
 }
 
+const uninitializedUserSubscriptionSortOrder int64 = -1
+
+func nextUserSubscriptionSortOrderTx(tx *gorm.DB, userId int) (int64, error) {
+	if tx == nil || userId <= 0 {
+		return 0, errors.New("invalid subscription sort order args")
+	}
+	var sortOrders []int64
+	if err := tx.Model(&UserSubscription{}).
+		Where("user_id = ? AND sort_order >= 0", userId).
+		Order("sort_order desc").
+		Limit(1).
+		Pluck("sort_order", &sortOrders).Error; err != nil {
+		return 0, err
+	}
+	if len(sortOrders) == 0 {
+		return 1, nil
+	}
+	if sortOrders[0] == math.MaxInt64 {
+		return 0, errors.New("subscription sort order overflow")
+	}
+	return sortOrders[0] + 1, nil
+}
+
 // User subscription instance
 type UserSubscription struct {
 	Id     int `json:"id"`
@@ -275,6 +299,9 @@ type UserSubscription struct {
 
 	// Whether wallet fallback is allowed after this subscription's quota is exhausted (snapshot from plan)
 	AllowWalletOverflow bool `json:"allow_wallet_overflow"`
+
+	// SortOrder is the user-specific subscription priority. Larger values are used first.
+	SortOrder int64 `json:"sort_order" gorm:"type:bigint;not null;default:-1"`
 
 	CreatedAt int64 `json:"created_at" gorm:"bigint"`
 	UpdatedAt int64 `json:"updated_at" gorm:"bigint"`
@@ -533,6 +560,10 @@ func CreateUserSubscriptionFromPlanTx(tx *gorm.DB, userId int, plan *Subscriptio
 	if plan.AllowWalletOverflow != nil {
 		allowWalletOverflow = *plan.AllowWalletOverflow
 	}
+	sortOrder, err := nextUserSubscriptionSortOrderTx(tx, userId)
+	if err != nil {
+		return nil, err
+	}
 	sub := &UserSubscription{
 		UserId:              userId,
 		PlanId:              plan.Id,
@@ -548,6 +579,7 @@ func CreateUserSubscriptionFromPlanTx(tx *gorm.DB, userId int, plan *Subscriptio
 		PrevUserGroup:       prevGroup,
 		DowngradeGroup:      strings.TrimSpace(plan.DowngradeGroup),
 		AllowWalletOverflow: allowWalletOverflow,
+		SortOrder:           sortOrder,
 		CreatedAt:           common.GetTimestamp(),
 		UpdatedAt:           common.GetTimestamp(),
 	}
@@ -851,6 +883,107 @@ func PurchaseSubscriptionWithBalance(userId int, planId int) error {
 	return nil
 }
 
+func CleanupInvalidUserSubscriptions(userId int) (int, error) {
+	if userId <= 0 {
+		return 0, errors.New("invalid userId")
+	}
+	now := GetDBTimestamp()
+	deletedCount := 0
+	groupChanged := false
+	err := DB.Transaction(func(tx *gorm.DB) error {
+		var user User
+		if err := lockForUpdate(tx).Select("id").Where("id = ?", userId).First(&user).Error; err != nil {
+			return err
+		}
+		var subs []UserSubscription
+		if err := lockForUpdate(tx).
+			Where("user_id = ?", userId).
+			Order("sort_order desc, end_time desc, id desc").
+			Find(&subs).Error; err != nil {
+			return err
+		}
+		for i := range subs {
+			sub := &subs[i]
+			if sub.Status == "active" && sub.EndTime > now {
+				continue
+			}
+			target, err := downgradeUserGroupForSubscriptionTx(tx, sub, now)
+			if err != nil {
+				return err
+			}
+			if target != "" {
+				groupChanged = true
+			}
+			if err := tx.Delete(&UserSubscription{}, sub.Id).Error; err != nil {
+				return err
+			}
+			deletedCount++
+		}
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+	if groupChanged {
+		refreshSubscriptionUserGroupCache(userId, "user subscription cleanup")
+	}
+	return deletedCount, nil
+}
+
+func MoveUserSubscription(userId int, userSubscriptionId int, direction string) error {
+	if userId <= 0 || userSubscriptionId <= 0 {
+		return errors.New("invalid userId or userSubscriptionId")
+	}
+	if direction != "up" && direction != "down" {
+		return errors.New("invalid subscription move direction")
+	}
+	return DB.Transaction(func(tx *gorm.DB) error {
+		var user User
+		if err := lockForUpdate(tx).Select("id").Where("id = ?", userId).First(&user).Error; err != nil {
+			return err
+		}
+		var subs []UserSubscription
+		if err := lockForUpdate(tx).
+			Where("user_id = ?", userId).
+			Order("sort_order desc, end_time desc, id desc").
+			Find(&subs).Error; err != nil {
+			return err
+		}
+		index := -1
+		for i := range subs {
+			if subs[i].Id == userSubscriptionId {
+				index = i
+				break
+			}
+		}
+		if index < 0 {
+			return gorm.ErrRecordNotFound
+		}
+		adjacentIndex := index - 1
+		if direction == "down" {
+			adjacentIndex = index + 1
+		}
+		if adjacentIndex < 0 || adjacentIndex >= len(subs) {
+			return errors.New("subscription is already at the requested boundary")
+		}
+		now := common.GetTimestamp()
+		updates := []struct {
+			id        int
+			sortOrder int64
+		}{
+			{id: subs[index].Id, sortOrder: subs[adjacentIndex].SortOrder},
+			{id: subs[adjacentIndex].Id, sortOrder: subs[index].SortOrder},
+		}
+		for _, update := range updates {
+			if err := tx.Model(&UserSubscription{}).Where("id = ? AND user_id = ?", update.id, userId).
+				Updates(map[string]any{"sort_order": update.sortOrder, "updated_at": now}).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
 // GetAllActiveUserSubscriptions returns all active subscriptions for a user.
 func GetAllActiveUserSubscriptions(userId int) ([]SubscriptionSummary, error) {
 	if userId <= 0 {
@@ -859,7 +992,7 @@ func GetAllActiveUserSubscriptions(userId int) ([]SubscriptionSummary, error) {
 	now := common.GetTimestamp()
 	var subs []UserSubscription
 	err := DB.Where("user_id = ? AND status = ? AND end_time > ?", userId, "active", now).
-		Order("end_time desc, id desc").
+		Order("sort_order desc, end_time desc, id desc").
 		Find(&subs).Error
 	if err != nil {
 		return nil, err
@@ -908,7 +1041,7 @@ func GetAllUserSubscriptions(userId int) ([]SubscriptionSummary, error) {
 	}
 	var subs []UserSubscription
 	err := DB.Where("user_id = ?", userId).
-		Order("end_time desc, id desc").
+		Order("sort_order desc, end_time desc, id desc").
 		Find(&subs).Error
 	if err != nil {
 		return nil, err
@@ -1341,7 +1474,7 @@ func PreConsumeUserSubscription(requestId string, userId int, modelName string, 
 		var subs []UserSubscription
 		if err := lockForUpdate(tx).
 			Where("user_id = ? AND status = ? AND end_time > ?", userId, "active", now).
-			Order("end_time asc, id asc").
+			Order("sort_order desc, end_time desc, id desc").
 			Find(&subs).Error; err != nil {
 			return errors.New("no active subscription")
 		}

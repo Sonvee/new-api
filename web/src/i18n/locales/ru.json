@@ -6860,6 +6860,14 @@
     "Search by ledger or source number...": "Поиск по номеру операции или источника...",
     "Failed to load billing records": "Не удалось загрузить записи биллинга",
     "Start date": "Дата начала",
-    "End date": "Дата окончания"
+    "End date": "Дата окончания",
+    "Clean up": "Очистить",
+    "Clean up invalid subscriptions": "Очистить недействительные подписки",
+    "Cleaned up {{count}} invalid subscriptions": "Очищено недействительных подписок: {{count}}",
+    "Expired and cancelled subscriptions will be permanently deleted. Continue?": "Истёкшие и отменённые подписки будут удалены без возможности восстановления. Продолжить?",
+    "Move subscription down": "Переместить подписку ниже",
+    "Move subscription up": "Переместить подписку выше",
+    "Refresh subscriptions": "Обновить подписки",
+    "Subscription order updated": "Порядок подписок обновлён"
   }
 }

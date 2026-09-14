@@ -23,6 +23,10 @@ type BillingPreferenceRequest struct {
 	BillingPreference string `json:"billing_preference"`
 }
 
+type SubscriptionMoveRequest struct {
+	Direction string `json:"direction"`
+}
+
 type SubscriptionBalancePayRequest struct {
 	PlanId int `json:"plan_id"`
 }
@@ -72,6 +76,33 @@ func GetSubscriptionSelf(c *gin.Context) {
 		"subscriptions":      activeSubscriptions, // all active subscriptions
 		"all_subscriptions":  allSubscriptions,    // all subscriptions including expired
 	})
+}
+
+func CleanupSelfSubscriptions(c *gin.Context) {
+	deletedCount, err := model.CleanupInvalidUserSubscriptions(c.GetInt("id"))
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	common.ApiSuccess(c, gin.H{"deleted_count": deletedCount})
+}
+
+func MoveSelfSubscription(c *gin.Context) {
+	userSubscriptionId, err := strconv.Atoi(c.Param("id"))
+	if err != nil || userSubscriptionId <= 0 {
+		common.ApiErrorMsg(c, "无效的订阅ID")
+		return
+	}
+	var req SubscriptionMoveRequest
+	if err := c.ShouldBindJSON(&req); err != nil || (req.Direction != "up" && req.Direction != "down") {
+		common.ApiErrorMsg(c, "参数错误")
+		return
+	}
+	if err := model.MoveUserSubscription(c.GetInt("id"), userSubscriptionId, req.Direction); err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	common.ApiSuccess(c, nil)
 }
 
 func UpdateSubscriptionPreference(c *gin.Context) {

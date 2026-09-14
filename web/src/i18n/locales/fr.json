@@ -6860,6 +6860,14 @@
     "Search by ledger or source number...": "Rechercher par numéro de journal ou source...",
     "Failed to load billing records": "Échec du chargement des historiques",
     "Start date": "Date de début",
-    "End date": "Date de fin"
+    "End date": "Date de fin",
+    "Clean up": "Nettoyer",
+    "Clean up invalid subscriptions": "Nettoyer les abonnements invalides",
+    "Cleaned up {{count}} invalid subscriptions": "{{count}} abonnements invalides nettoyés",
+    "Expired and cancelled subscriptions will be permanently deleted. Continue?": "Les abonnements expirés et annulés seront définitivement supprimés. Continuer ?",
+    "Move subscription down": "Descendre l'abonnement",
+    "Move subscription up": "Monter l'abonnement",
+    "Refresh subscriptions": "Actualiser les abonnements",
+    "Subscription order updated": "L'ordre des abonnements a été mis à jour"
   }
 }

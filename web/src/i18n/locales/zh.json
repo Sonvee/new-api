@@ -6860,6 +6860,14 @@
     "Search by ledger or source number...": "搜索流水单号或来源单号...",
     "Failed to load billing records": "账单记录加载失败",
     "Start date": "开始日期",
-    "End date": "结束日期"
+    "End date": "结束日期",
+    "Clean up": "清理",
+    "Clean up invalid subscriptions": "清理无效订阅",
+    "Cleaned up {{count}} invalid subscriptions": "已清理 {{count}} 个无效订阅",
+    "Expired and cancelled subscriptions will be permanently deleted. Continue?": "已过期和已取消的订阅将被永久删除。是否继续？",
+    "Move subscription down": "下移订阅",
+    "Move subscription up": "上移订阅",
+    "Refresh subscriptions": "刷新订阅",
+    "Subscription order updated": "订阅顺序已更新"
   }
 }
