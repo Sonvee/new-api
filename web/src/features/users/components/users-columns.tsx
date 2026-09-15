@@ -241,10 +241,18 @@ export function useUsersColumns(): ColumnDef<User>[] {
         cell: ({ row }) => {
           const user = row.original
           const affCount = user.aff_count || 0
+          const affValidCount = user.aff_valid_count || 0
           const affHistoryQuota = user.aff_history_quota || 0
+          const affCommissionQuota = user.aff_commission_quota || 0
           const inviterId = user.inviter_id || 0
 
-          if (affCount === 0 && affHistoryQuota === 0 && inviterId === 0) {
+          if (
+            affCount === 0 &&
+            affValidCount === 0 &&
+            affHistoryQuota === 0 &&
+            affCommissionQuota === 0 &&
+            inviterId === 0
+          ) {
             return <span className='text-muted-foreground text-sm'>—</span>
           }
 
@@ -253,12 +261,22 @@ export function useUsersColumns(): ColumnDef<User>[] {
               data-table-text='secondary'
               className='min-w-0 space-y-1 text-xs font-normal'
             >
-              {(affCount > 0 || affHistoryQuota !== 0) && (
+              {(
+                affCount > 0 ||
+                affValidCount > 0 ||
+                affHistoryQuota !== 0 ||
+                affCommissionQuota !== 0
+              ) && (
                 <LongText>
                   {t('Invited {{count}} users', { count: affCount })} ·{' '}
+                  {t('Activated {{count}} users', { count: affValidCount })} ·{' '}
                   {t('Earnings')}:{' '}
                   <span className='tabular-nums'>
                     {formatQuota(affHistoryQuota)}
+                  </span>{' · '}
+                  {t('Commission')}:{' '}
+                  <span className='tabular-nums'>
+                    {formatQuota(affCommissionQuota)}
                   </span>
                 </LongText>
               )}

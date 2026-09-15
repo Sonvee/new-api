@@ -48,8 +48,10 @@ export const userSchema = z.object({
   group: z.string(),
   aff_code: z.string().optional(),
   aff_count: z.number().optional(),
+  aff_valid_count: z.number().optional(),
   aff_quota: z.number().optional(),
   aff_history_quota: z.number().optional(),
+  aff_commission_quota: z.number().optional(),
   inviter_id: z.number().optional(),
   linux_do_id: z.string().optional(),
   status: userStatusSchema,
@@ -104,6 +106,11 @@ export interface GetUsersResponse {
     page: number
     page_size: number
   }
+}
+
+export interface UserQuotaStats {
+  total_quota: number
+  remaining_quota: number
 }
 
 export interface SearchUsersParams {

@@ -6868,6 +6868,10 @@
     "Move subscription down": "Descendre l'abonnement",
     "Move subscription up": "Monter l'abonnement",
     "Refresh subscriptions": "Actualiser les abonnements",
-    "Subscription order updated": "L'ordre des abonnements a été mis à jour"
+    "Subscription order updated": "L'ordre des abonnements a été mis à jour",
+    "Commission": "Commission",
+    "Total Site Quota": "Quota totale du site",
+    "Remaining Site Quota": "Quota restante du site",
+    "Activated {{count}} users": "{{count}} utilisateurs activés"
   }
 }

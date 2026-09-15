@@ -6868,6 +6868,10 @@
     "Move subscription down": "サブスクリプションを下へ移動",
     "Move subscription up": "サブスクリプションを上へ移動",
     "Refresh subscriptions": "サブスクリプションを更新",
-    "Subscription order updated": "サブスクリプションの順序を更新しました"
+    "Subscription order updated": "サブスクリプションの順序を更新しました",
+    "Commission": "コミッション",
+    "Total Site Quota": "サイト全体の総利用枠",
+    "Remaining Site Quota": "サイト全体の残り利用枠",
+    "Activated {{count}} users": "有効化済み {{count}} 人"
   }
 }

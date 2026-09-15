@@ -6868,6 +6868,10 @@
     "Move subscription down": "下移订阅",
     "Move subscription up": "上移订阅",
     "Refresh subscriptions": "刷新订阅",
-    "Subscription order updated": "订阅顺序已更新"
+    "Subscription order updated": "订阅顺序已更新",
+    "Commission": "佣金",
+    "Total Site Quota": "全站总额度",
+    "Remaining Site Quota": "全站剩余额度",
+    "Activated {{count}} users": "激活 {{count}} 人"
   }
 }

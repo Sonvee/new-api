@@ -27,6 +27,7 @@ import type {
   GetUsersResponse,
   SearchUsersParams,
   UserFormData,
+  UserQuotaStats,
   ManageUserAction,
   ManageUserQuotaPayload,
   ApiResponse,
@@ -81,6 +82,18 @@ export async function searchUsers(
   if (sort_order) queryParams.set('sort_order', sort_order)
   const res = await api.get(`/api/user/search?${queryParams.toString()}`)
   return res.data
+}
+
+/**
+ * Get aggregate quota statistics for all users
+ */
+export async function getUserQuotaStats(): Promise<UserQuotaStats> {
+  const res = await api.get('/api/user/stats/quota')
+  requireServerSuccess(res.data)
+  if (!res.data.data) {
+    throw new Error('User quota stats response is missing data')
+  }
+  return res.data.data
 }
 
 /**

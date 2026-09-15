@@ -6868,6 +6868,10 @@
     "Move subscription down": "Переместить подписку ниже",
     "Move subscription up": "Переместить подписку выше",
     "Refresh subscriptions": "Обновить подписки",
-    "Subscription order updated": "Порядок подписок обновлён"
+    "Subscription order updated": "Порядок подписок обновлён",
+    "Commission": "Комиссия",
+    "Total Site Quota": "Общая квота сайта",
+    "Remaining Site Quota": "Оставшаяся квота сайта",
+    "Activated {{count}} users": "Активировано: {{count}}"
   }
 }
