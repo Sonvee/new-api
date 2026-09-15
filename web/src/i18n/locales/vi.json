@@ -6556,6 +6556,10 @@
     "Move subscription down": "Đưa gói đăng ký xuống",
     "Move subscription up": "Đưa gói đăng ký lên",
     "Refresh subscriptions": "Làm mới gói đăng ký",
-    "Subscription order updated": "Đã cập nhật thứ tự gói đăng ký"
+    "Subscription order updated": "Đã cập nhật thứ tự gói đăng ký",
+    "Commission": "Hoa hồng",
+    "Total Site Quota": "Tổng hạn mức toàn hệ thống",
+    "Remaining Site Quota": "Hạn mức còn lại toàn hệ thống",
+    "Activated {{count}} users": "Đã kích hoạt {{count}} người"
   }
 }
