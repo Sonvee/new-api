@@ -42,7 +42,7 @@ export function UsersQuotaStats(props: UsersQuotaStatsProps) {
     : formatQuota(props.stats.remaining_quota)
 
   return (
-    <div className='flex min-h-8 flex-wrap items-center gap-x-3 gap-y-1 rounded-md border bg-muted/30 px-3 py-1.5 text-xs sm:text-sm'>
+    <div className='flex h-8 flex-wrap items-center gap-x-3 gap-y-1 rounded-md border bg-muted/30 px-3 py-0 text-xs sm:text-sm'>
       <span className='text-muted-foreground whitespace-nowrap'>
         {t('Total Site Quota')}{' '}
         <span className='text-foreground tabular-nums'>{totalQuota}</span>
