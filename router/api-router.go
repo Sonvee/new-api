@@ -306,6 +306,17 @@ func SetApiRouter(router *gin.Engine) {
 			}
 		}
 
+		accountingRoute := apiRouter.Group("/accounting")
+		accountingRoute.Use(middleware.AdminAuth())
+		{
+			accountingRoute.GET("/online-income", controller.GetAccountingOnlineIncome)
+			accountingRoute.GET("/entries", controller.GetAccountingEntries)
+			accountingRoute.POST("/entries", controller.CreateAccountingEntry)
+			accountingRoute.PUT("/entries/:id", controller.UpdateAccountingEntry)
+			accountingRoute.DELETE("/entries/:id", controller.DeleteAccountingEntry)
+			accountingRoute.GET("/stats", controller.GetAccountingStats)
+		}
+
 		redemptionRoute := apiRouter.Group("/redemption")
 		redemptionRoute.Use(middleware.AdminAuth())
 		{

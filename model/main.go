@@ -372,6 +372,7 @@ func migrateDB() error {
 		&Token{},
 		&User{},
 		&WalletLedger{},
+		&AccountingEntry{},
 		&UserSession{},
 		&AuthFlow{},
 		&ExternalIdentityClaim{},
