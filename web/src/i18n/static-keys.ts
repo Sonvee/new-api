@@ -19,6 +19,26 @@ For commercial licensing, please contact support@quantumnous.com
 // Static translation keys that don't get picked up by the t('...') regex.
 // These cover dynamic labels (e.g. constants, configs) that are passed into t at runtime.
 export const STATIC_I18N_KEYS = [
+  // Accounting filters and mutation messages referenced through constants.
+  '1 Day',
+  '1 Week',
+  '1 Month',
+  'Day',
+  'Week',
+  'Month',
+  'By day',
+  'By week',
+  'By month',
+  'All',
+  'WeChat Pay',
+  'Alipay',
+  'Stripe',
+  'Creem',
+  'Waffo',
+  'Waffo Pancake',
+  'Accounting entry created',
+  'Accounting entry updated',
+  'Accounting entry deleted',
   'For this channel, map the model name in client requests to the model name sent upstream.',
   // Channel provider labels, descriptions and presentation badges.
   'Zhipu GLM',
