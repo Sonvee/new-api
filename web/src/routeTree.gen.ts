@@ -34,6 +34,7 @@ import { Route as PricingIndexRouteImport } from './routes/pricing/index'
 import { Route as RankingsIndexRouteImport } from './routes/rankings/index'
 import { Route as SetupIndexRouteImport } from './routes/setup/index'
 import { Route as authUserResetRouteImport } from './routes/(auth)/user/reset'
+import { Route as AuthenticatedAccountingIndexRouteImport } from './routes/_authenticated/accounting/index'
 import { Route as AuthenticatedAffiliateRewardsIndexRouteImport } from './routes/_authenticated/affiliate-rewards/index'
 import { Route as AuthenticatedBillingRecordsIndexRouteImport } from './routes/_authenticated/billing-records/index'
 import { Route as AuthenticatedChannelsIndexRouteImport } from './routes/_authenticated/channels/index'
@@ -198,6 +199,12 @@ const authUserResetRoute = authUserResetRouteImport.update({
   path: '/user/reset',
   getParentRoute: () => authRouteRoute,
 } as any)
+const AuthenticatedAccountingIndexRoute =
+  AuthenticatedAccountingIndexRouteImport.update({
+    id: '/accounting/',
+    path: '/accounting/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAffiliateRewardsIndexRoute =
   AuthenticatedAffiliateRewardsIndexRouteImport.update({
     id: '/affiliate-rewards/',
@@ -459,6 +466,7 @@ export interface FileRoutesByFullPath {
   '/models/$section': typeof AuthenticatedModelsSectionRoute
   '/usage-logs/$section': typeof AuthenticatedUsageLogsSectionRoute
   '/usage-logs/audit': typeof AuthenticatedUsageLogsAuditRoute
+  '/accounting/': typeof AuthenticatedAccountingIndexRoute
   '/affiliate-rewards/': typeof AuthenticatedAffiliateRewardsIndexRoute
   '/billing-records/': typeof AuthenticatedBillingRecordsIndexRoute
   '/channels/': typeof AuthenticatedChannelsIndexRoute
@@ -522,6 +530,7 @@ export interface FileRoutesByTo {
   '/models/$section': typeof AuthenticatedModelsSectionRoute
   '/usage-logs/$section': typeof AuthenticatedUsageLogsSectionRoute
   '/usage-logs/audit': typeof AuthenticatedUsageLogsAuditRoute
+  '/accounting': typeof AuthenticatedAccountingIndexRoute
   '/affiliate-rewards': typeof AuthenticatedAffiliateRewardsIndexRoute
   '/billing-records': typeof AuthenticatedBillingRecordsIndexRoute
   '/channels': typeof AuthenticatedChannelsIndexRoute
@@ -589,6 +598,7 @@ export interface FileRoutesById {
   '/_authenticated/models/$section': typeof AuthenticatedModelsSectionRoute
   '/_authenticated/usage-logs/$section': typeof AuthenticatedUsageLogsSectionRoute
   '/_authenticated/usage-logs/audit': typeof AuthenticatedUsageLogsAuditRoute
+  '/_authenticated/accounting/': typeof AuthenticatedAccountingIndexRoute
   '/_authenticated/affiliate-rewards/': typeof AuthenticatedAffiliateRewardsIndexRoute
   '/_authenticated/billing-records/': typeof AuthenticatedBillingRecordsIndexRoute
   '/_authenticated/channels/': typeof AuthenticatedChannelsIndexRoute
@@ -655,6 +665,7 @@ export interface FileRouteTypes {
     | '/models/$section'
     | '/usage-logs/$section'
     | '/usage-logs/audit'
+    | '/accounting/'
     | '/affiliate-rewards/'
     | '/billing-records/'
     | '/channels/'
@@ -718,6 +729,7 @@ export interface FileRouteTypes {
     | '/models/$section'
     | '/usage-logs/$section'
     | '/usage-logs/audit'
+    | '/accounting'
     | '/affiliate-rewards'
     | '/billing-records'
     | '/channels'
@@ -784,6 +796,7 @@ export interface FileRouteTypes {
     | '/_authenticated/models/$section'
     | '/_authenticated/usage-logs/$section'
     | '/_authenticated/usage-logs/audit'
+    | '/_authenticated/accounting/'
     | '/_authenticated/affiliate-rewards/'
     | '/_authenticated/billing-records/'
     | '/_authenticated/channels/'
@@ -1014,6 +1027,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/user/reset'
       preLoaderRoute: typeof authUserResetRouteImport
       parentRoute: typeof authRouteRoute
+    }
+    '/_authenticated/accounting/': {
+      id: '/_authenticated/accounting/'
+      path: '/accounting'
+      fullPath: '/accounting/'
+      preLoaderRoute: typeof AuthenticatedAccountingIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/affiliate-rewards/': {
       id: '/_authenticated/affiliate-rewards/'
@@ -1386,6 +1406,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedModelsSectionRoute: typeof AuthenticatedModelsSectionRoute
   AuthenticatedUsageLogsSectionRoute: typeof AuthenticatedUsageLogsSectionRoute
   AuthenticatedUsageLogsAuditRoute: typeof AuthenticatedUsageLogsAuditRoute
+  AuthenticatedAccountingIndexRoute: typeof AuthenticatedAccountingIndexRoute
   AuthenticatedAffiliateRewardsIndexRoute: typeof AuthenticatedAffiliateRewardsIndexRoute
   AuthenticatedBillingRecordsIndexRoute: typeof AuthenticatedBillingRecordsIndexRoute
   AuthenticatedChannelsIndexRoute: typeof AuthenticatedChannelsIndexRoute
@@ -1414,6 +1435,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedModelsSectionRoute: AuthenticatedModelsSectionRoute,
   AuthenticatedUsageLogsSectionRoute: AuthenticatedUsageLogsSectionRoute,
   AuthenticatedUsageLogsAuditRoute: AuthenticatedUsageLogsAuditRoute,
+  AuthenticatedAccountingIndexRoute: AuthenticatedAccountingIndexRoute,
   AuthenticatedAffiliateRewardsIndexRoute:
     AuthenticatedAffiliateRewardsIndexRoute,
   AuthenticatedBillingRecordsIndexRoute: AuthenticatedBillingRecordsIndexRoute,

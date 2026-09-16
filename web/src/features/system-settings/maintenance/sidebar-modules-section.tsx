@@ -172,6 +172,10 @@ export function SidebarModulesSection({
         title: t('Subscription Management'),
         description: t('Manage subscription plans and pricing.'),
       },
+      accounting: {
+        title: t('Accounting'),
+        description: t('Record and review financial entries.'),
+      },
     },
   }
   const formDefaults = useMemo(() => config, [config])
