@@ -20,6 +20,7 @@ package controller
 
 import (
     "errors"
+    "net/http"
     "strconv"
 
     "github.com/QuantumNous/new-api/common"
@@ -166,4 +167,24 @@ func GetAccountingStats(c *gin.Context) {
         return
     }
     common.ApiSuccess(c, stats)
+}
+
+func GetAccountingTrend(c *gin.Context) {
+	filter, err := getAccountingTimeFilter(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	granularity := c.DefaultQuery("granularity", "day")
+	trend, err := model.GetAccountingTrend(filter, granularity)
+	if err != nil {
+		if errors.Is(err, model.ErrInvalidAccountingGranularity) || errors.Is(err, model.ErrInvalidAccountingTime) {
+			c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
+			return
+		}
+		common.SysError("failed to query accounting trend: " + err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "failed to query accounting trend"})
+		return
+	}
+	common.ApiSuccess(c, trend)
 }

@@ -313,6 +313,7 @@ func SetApiRouter(router *gin.Engine) {
 			accountingRoute.PUT("/entries/:id", controller.UpdateAccountingEntry)
 			accountingRoute.DELETE("/entries/:id", controller.DeleteAccountingEntry)
 			accountingRoute.GET("/stats", controller.GetAccountingStats)
+			accountingRoute.GET("/trend", controller.GetAccountingTrend)
 		}
 
 		redemptionRoute := apiRouter.Group("/redemption")

@@ -217,16 +217,25 @@ func accountingMoneyToCents(value float64) int64 {
     return decimal.NewFromFloat(value).Mul(decimal.NewFromInt(100)).Round(0).IntPart()
 }
 
-func GetAccountingOnlineIncome(pageInfo *common.PageInfo, filter AccountingTimeFilter) ([]*AccountingOnlineIncomeRecord, int64, error) {
-    topupQuery := DB.Model(&TopUp{}).
+// 两类线上收入在列表、汇总和趋势中必须采用同一过滤口径。
+func accountingTopUpIncomeQuery(filter AccountingTimeFilter) *gorm.DB {
+    query := DB.Model(&TopUp{}).
         Where("status = ? AND amount > 0", common.TopUpStatusSuccess).
         Where("NOT EXISTS (SELECT 1 FROM wallet_ledgers WHERE wallet_ledgers.user_id = top_ups.user_id AND wallet_ledgers.source_type = ? AND wallet_ledgers.source_id = top_ups.trade_no AND wallet_ledgers.type = ?)", "topup", WalletLedgerTypeAdminTopup)
-    topupQuery = applyAccountingTimeFilter(topupQuery, "create_time", filter)
+    return applyAccountingTimeFilter(query, "create_time", filter)
+}
 
-    subscriptionQuery := DB.Model(&SubscriptionOrder{}).
+func accountingSubscriptionIncomeQuery(filter AccountingTimeFilter) *gorm.DB {
+    query := DB.Model(&SubscriptionOrder{}).
         Where("status = ? AND money > 0", common.TopUpStatusSuccess).
         Where("payment_provider <> ? AND payment_method <> ?", PaymentProviderBalance, PaymentMethodBalance)
-    subscriptionQuery = applyAccountingTimeFilter(subscriptionQuery, "create_time", filter)
+    return applyAccountingTimeFilter(query, "create_time", filter)
+}
+
+func GetAccountingOnlineIncome(pageInfo *common.PageInfo, filter AccountingTimeFilter) ([]*AccountingOnlineIncomeRecord, int64, error) {
+    topupQuery := accountingTopUpIncomeQuery(filter)
+
+    subscriptionQuery := accountingSubscriptionIncomeQuery(filter)
 
     var topupTotal int64
     if err := topupQuery.Count(&topupTotal).Error; err != nil {
@@ -426,19 +435,13 @@ func DeleteAccountingEntry(id int) error {
 
 func GetAccountingStats(filter AccountingTimeFilter) (AccountingStats, error) {
     var topupMoney []float64
-    topupQuery := DB.Model(&TopUp{}).
-        Where("status = ? AND amount > 0", common.TopUpStatusSuccess).
-        Where("NOT EXISTS (SELECT 1 FROM wallet_ledgers WHERE wallet_ledgers.user_id = top_ups.user_id AND wallet_ledgers.source_type = ? AND wallet_ledgers.source_id = top_ups.trade_no AND wallet_ledgers.type = ?)", "topup", WalletLedgerTypeAdminTopup)
-    topupQuery = applyAccountingTimeFilter(topupQuery, "create_time", filter)
+    topupQuery := accountingTopUpIncomeQuery(filter)
     if err := topupQuery.Pluck("money", &topupMoney).Error; err != nil {
         return AccountingStats{}, err
     }
 
     var subscriptionMoney []float64
-    subscriptionQuery := DB.Model(&SubscriptionOrder{}).
-        Where("status = ? AND money > 0", common.TopUpStatusSuccess).
-        Where("payment_provider <> ? AND payment_method <> ?", PaymentProviderBalance, PaymentMethodBalance)
-    subscriptionQuery = applyAccountingTimeFilter(subscriptionQuery, "create_time", filter)
+    subscriptionQuery := accountingSubscriptionIncomeQuery(filter)
     if err := subscriptionQuery.Pluck("money", &subscriptionMoney).Error; err != nil {
         return AccountingStats{}, err
     }
