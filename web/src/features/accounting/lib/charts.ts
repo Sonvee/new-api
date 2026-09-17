@@ -19,7 +19,14 @@ For commercial licensing, please contact support@quantumnous.com
 import type { IAreaChartSpec, IBarChartSpec } from '@visactor/vchart'
 import type { TFunction } from 'i18next'
 
-import type { AccountingChartType, AccountingTrendPoint } from '../types'
+import dayjs from '@/lib/dayjs'
+import { formatChartTime } from '@/lib/time'
+
+import type {
+  AccountingChartType,
+  AccountingTimeGranularity,
+  AccountingTrendPoint,
+} from '../types'
 import { formatYuanCents } from './format'
 
 interface AccountingChartRow {
@@ -34,17 +41,20 @@ export function createAccountingTrendSpec(
   chartType: AccountingChartType,
   t: TFunction,
   colors: string[],
-  visiblePoints: number
+  granularity: AccountingTimeGranularity
 ): IBarChartSpec | IAreaChartSpec {
   const metrics = [t('Total income'), t('Total expense'), t('Gross profit')]
-  const values: AccountingChartRow[] = points.flatMap((point) => [
-    { Time: point.time, Metric: metrics[0], Amount: point.total_income_cents },
-    { Time: point.time, Metric: metrics[1], Amount: point.total_expense_cents },
-    { Time: point.time, Metric: metrics[2], Amount: point.gross_profit_cents },
-  ])
-  const scrollEnd = Math.min(1, visiblePoints / Math.max(points.length, 1))
+  const values: AccountingChartRow[] = points.flatMap((point) => {
+    const time = formatChartTime(dayjs(point.time).unix(), granularity)
+    return [
+      { Time: time, Metric: metrics[0], Amount: point.total_income_cents },
+      { Time: time, Metric: metrics[1], Amount: point.total_expense_cents },
+      { Time: time, Metric: metrics[2], Amount: point.gross_profit_cents },
+    ]
+  })
   const common = {
     data: [{ id: 'accountingTrend', values }],
+    xField: 'Time',
     yField: 'Amount',
     seriesField: 'Metric',
     stack: false,
@@ -60,9 +70,7 @@ export function createAccountingTrendSpec(
     ],
     legends: {
       visible: true,
-      orient: 'bottom',
-      selectMode: 'multiple',
-      defaultSelected: metrics,
+      selectMode: 'single',
     },
     tooltip: {
       mark: {
@@ -82,27 +90,14 @@ export function createAccountingTrendSpec(
         ],
       },
     },
-    scrollBar: {
-      visible: scrollEnd < 1,
-      orient: 'bottom',
-      axisId: 'accountingTime',
-      filterMode: 'axis',
-      start: 0,
-      end: scrollEnd,
-      roamScroll: { enable: true },
-      roamDrag: { enable: true },
-      height: 12,
-    },
     title: { visible: points.length === 0, text: t('No data available') },
-    background: 'transparent',
-    animation: false,
+    background: { fill: 'transparent' },
+    animation: true,
   } satisfies Omit<IAreaChartSpec, 'type'>
   if (chartType === 'bar') {
     return {
       ...common,
       type: 'bar',
-      // 二级 band 字段是分组柱状图的关键；只有 stack:false 会造成柱子重叠。
-      xField: ['Time', 'Metric'],
       barGapInGroup: 2,
       barMaxWidth: 24,
     }
@@ -110,7 +105,6 @@ export function createAccountingTrendSpec(
   return {
     ...common,
     type: 'area',
-    xField: 'Time',
     area: { style: { fillOpacity: 0.08, curveType: 'monotone' } },
     line: { style: { lineWidth: 2, curveType: 'monotone' } },
     point: { visible: false },

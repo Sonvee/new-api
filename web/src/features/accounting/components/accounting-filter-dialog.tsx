@@ -23,6 +23,7 @@ import { toast } from 'sonner'
 
 import { DateTimePicker } from '@/components/datetime-picker'
 import { Dialog } from '@/components/dialog'
+import { SectionDivider } from '@/components/section-divider'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import {
@@ -33,7 +34,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Separator } from '@/components/ui/separator'
 import { getRollingDateRange } from '@/lib/time'
 import { cn } from '@/lib/utils'
 
@@ -53,8 +53,12 @@ type AccountingFilterDialogProps = {
   onApply: (filters: AccountingFilters) => void
 }
 
-function getQuickRange(range: AccountingTimeRange): Pick<AccountingFilters, 'range' | 'startTime' | 'endTime'> {
-  if (range === 'all') return { range, startTime: undefined, endTime: undefined }
+function getQuickRange(
+  range: AccountingTimeRange
+): Pick<AccountingFilters, 'range' | 'startTime' | 'endTime'> {
+  if (range === 'all') {
+    return { range, startTime: undefined, endTime: undefined }
+  }
   let durationDays = 30
   if (range === 'day') durationDays = 1
   if (range === 'week') durationDays = 7
@@ -62,18 +66,48 @@ function getQuickRange(range: AccountingTimeRange): Pick<AccountingFilters, 'ran
   return { range, startTime: start, endTime: end }
 }
 
+function granularityForRange(
+  range: AccountingTimeRange
+): AccountingTimeGranularity {
+  if (range === 'day') return 'hour'
+  if (range === 'week') return 'day'
+  return 'week'
+}
+
 export function AccountingFilterDialog(props: AccountingFilterDialogProps) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState<AccountingFilters>(props.filters)
+  const [selectedRange, setSelectedRange] =
+    useState<AccountingTimeRange | null>(
+      props.filters.range === 'custom' ? null : props.filters.range
+    )
 
   const handleOpenChange = (nextOpen: boolean) => {
-    if (nextOpen) setDraft(props.filters)
+    if (nextOpen) {
+      setDraft(props.filters)
+      setSelectedRange(
+        props.filters.range === 'custom' ? null : props.filters.range
+      )
+    }
     setOpen(nextOpen)
   }
 
   const handleQuickRange = (range: AccountingTimeRange) => {
-    setDraft((current) => ({ ...current, ...getQuickRange(range) }))
+    setDraft((current) => ({
+      ...current,
+      ...getQuickRange(range),
+      granularity: granularityForRange(range),
+    }))
+    setSelectedRange(range)
+  }
+
+  const handleDateChange = (
+    field: 'startTime' | 'endTime',
+    value: Date | undefined
+  ) => {
+    setDraft((current) => ({ ...current, range: 'custom', [field]: value }))
+    setSelectedRange(null)
   }
 
   const handleApply = () => {
@@ -91,6 +125,7 @@ export function AccountingFilterDialog(props: AccountingFilterDialogProps) {
 
   const handleReset = () => {
     setDraft(DEFAULT_ACCOUNTING_FILTERS)
+    setSelectedRange('all')
     props.onApply(DEFAULT_ACCOUNTING_FILTERS)
     setOpen(false)
   }
@@ -100,43 +135,51 @@ export function AccountingFilterDialog(props: AccountingFilterDialogProps) {
       open={open}
       onOpenChange={handleOpenChange}
       trigger={
-        <Button variant='outline'>
-          <Filter data-icon='inline-start' />
+        <Button variant='outline' size='sm'>
+          <Filter className='mr-2 h-4 w-4' />
           {t('Filter')}
         </Button>
       }
       title={t('Accounting filters')}
-      description={t('Filter accounting data by time range and configure chart granularity.')}
-      contentClassName='sm:max-w-lg'
+      description={t(
+        'Filter accounting data by time range and configure chart granularity.'
+      )}
+      contentClassName='max-sm:w-screen max-sm:max-w-none max-sm:rounded-none max-sm:p-4 sm:max-w-lg'
+      naturalContentHeight
+      footerClassName='grid grid-cols-2 gap-2 sm:flex'
       footer={
         <>
           <Button type='button' variant='outline' onClick={handleReset}>
-            <RotateCcw data-icon='inline-start' />
+            <RotateCcw className='mr-2 h-4 w-4' />
             {t('Reset')}
           </Button>
           <Button type='button' onClick={handleApply}>
-            <Search data-icon='inline-start' />
+            <Search className='mr-2 h-4 w-4' />
             {t('Apply Filters')}
           </Button>
         </>
       }
     >
-      <div className='grid gap-4 py-1'>
+      <div className='grid gap-2.5 py-2'>
         <div className='grid gap-2'>
           <Label className='flex items-center gap-2'>
             <Calendar className='size-4' aria-hidden='true' />
             {t('Quick Range')}
           </Label>
-          <div className='grid grid-cols-2 gap-2 sm:grid-cols-4'>
+          <div className='grid grid-cols-2 gap-2 sm:flex'>
             {ACCOUNTING_TIME_RANGES.map((option) => (
               <Button
                 key={option.value}
                 type='button'
                 size='sm'
-                variant={draft.range === option.value ? 'default' : 'outline'}
-                aria-pressed={draft.range === option.value}
+                variant={selectedRange === option.value ? 'default' : 'outline'}
+                aria-pressed={selectedRange === option.value}
                 onClick={() => handleQuickRange(option.value)}
-                className={cn(draft.range === option.value && 'ring-ring ring-2 ring-offset-2')}
+                className={cn(
+                  'flex-1',
+                  selectedRange === option.value &&
+                    'ring-ring ring-2 ring-offset-2'
+                )}
               >
                 {t(option.labelKey)}
               </Button>
@@ -144,14 +187,14 @@ export function AccountingFilterDialog(props: AccountingFilterDialogProps) {
           </div>
         </div>
 
-        <Separator />
+        <SectionDivider label={t('Custom Time Range')} />
 
         <div className='grid gap-3'>
           <div className='grid gap-2'>
             <Label>{t('Start Time')}</Label>
             <DateTimePicker
               value={draft.startTime}
-              onChange={(value) => setDraft((current) => ({ ...current, range: 'custom', startTime: value }))}
+              onChange={(value) => handleDateChange('startTime', value)}
               placeholder={t('Select start time')}
             />
           </div>
@@ -159,22 +202,32 @@ export function AccountingFilterDialog(props: AccountingFilterDialogProps) {
             <Label>{t('End Time')}</Label>
             <DateTimePicker
               value={draft.endTime}
-              onChange={(value) => setDraft((current) => ({ ...current, range: 'custom', endTime: value }))}
+              onChange={(value) => handleDateChange('endTime', value)}
               placeholder={t('Select end time')}
             />
           </div>
         </div>
 
-        <Separator />
+        <SectionDivider label={t('Chart Settings')} />
 
         <div className='grid gap-2'>
-          <Label>{t('Time Granularity')}</Label>
+          <Label htmlFor='accounting-time-granularity'>
+            {t('Time Granularity')}
+          </Label>
           <Select
-            items={ACCOUNTING_GRANULARITIES.map((option) => ({ value: option.value, label: t(option.labelKey) }))}
+            items={ACCOUNTING_GRANULARITIES.map((option) => ({
+              value: option.value,
+              label: t(option.labelKey),
+            }))}
             value={draft.granularity}
-            onValueChange={(value) => setDraft((current) => ({ ...current, granularity: value as AccountingTimeGranularity }))}
+            onValueChange={(value) =>
+              setDraft((current) => ({
+                ...current,
+                granularity: value as AccountingTimeGranularity,
+              }))
+            }
           >
-            <SelectTrigger>
+            <SelectTrigger id='accounting-time-granularity'>
               <SelectValue placeholder={t('Select time granularity')} />
             </SelectTrigger>
             <SelectContent alignItemWithTrigger={false}>

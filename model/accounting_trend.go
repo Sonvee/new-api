@@ -41,9 +41,12 @@ type AccountingTrend struct {
 	Items       []AccountingTrendPoint `json:"items"`
 }
 
-// accountingPeriodStart 保持日、周、月的日历边界，周从周一开始。
+// accountingPeriodStart 保持小时、日、周、月的日历边界，周从周一开始。
 func accountingPeriodStart(timestamp int64, granularity string) time.Time {
 	date := time.Unix(timestamp, 0).In(time.Local)
+	if granularity == "hour" {
+		return time.Date(date.Year(), date.Month(), date.Day(), date.Hour(), 0, 0, 0, date.Location())
+	}
 	start := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
 	if granularity == "month" {
 		return time.Date(date.Year(), date.Month(), 1, 0, 0, 0, 0, date.Location())
@@ -57,7 +60,7 @@ func accountingPeriodStart(timestamp int64, granularity string) time.Time {
 // GetAccountingTrend 流式读取账单并在 Go 中按日历聚合，避免依赖数据库日期函数。
 func GetAccountingTrend(filter AccountingTimeFilter, granularity string) (AccountingTrend, error) {
 	result := AccountingTrend{Granularity: granularity, Items: []AccountingTrendPoint{}}
-	if granularity != "day" && granularity != "week" && granularity != "month" {
+	if granularity != "hour" && granularity != "day" && granularity != "week" && granularity != "month" {
 		return result, ErrInvalidAccountingGranularity
 	}
 	if filter.StartTime < 0 || filter.EndTime < 0 || (filter.EndTime > 0 && filter.StartTime > filter.EndTime) {
@@ -107,7 +110,11 @@ func GetAccountingTrend(filter AccountingTimeFilter, granularity string) (Accoun
 			}
 			period := accountingPeriodStart(entry.CreateTime, granularity)
 			point := periods[period.Unix()]
-			point.Time = period.Format("2006-01-02")
+			if granularity == "hour" {
+				point.Time = period.Format("2006-01-02 15:00")
+			} else {
+				point.Time = period.Format("2006-01-02")
+			}
 			total := point.TotalIncomeCents
 			if entry.Kind == AccountingKindExpense {
 				total = point.TotalExpenseCents
@@ -147,18 +154,28 @@ func GetAccountingTrend(filter AccountingTimeFilter, granularity string) (Accoun
 	if filter.EndTime > 0 {
 		lastTime = filter.EndTime
 	}
-	monthStep, dayStep := 0, 1
+	dayStep := 1
 	if granularity == "week" {
 		dayStep = 7
 	}
+	monthStep := 0
 	if granularity == "month" {
 		monthStep, dayStep = 1, 0
 	}
 	end := accountingPeriodStart(lastTime, granularity)
-	for period := accountingPeriodStart(firstTime, granularity); !period.After(end); period = period.AddDate(0, monthStep, dayStep) {
+	for period := accountingPeriodStart(firstTime, granularity); !period.After(end); {
 		point := periods[period.Unix()]
-		point.Time = period.Format("2006-01-02")
+		if granularity == "hour" {
+			point.Time = period.Format("2006-01-02 15:00")
+		} else {
+			point.Time = period.Format("2006-01-02")
+		}
 		result.Items = append(result.Items, point)
+		if granularity == "hour" {
+			period = period.Add(time.Hour)
+		} else {
+			period = period.AddDate(0, monthStep, dayStep)
+		}
 	}
 	return result, nil
 }

@@ -24,7 +24,7 @@ export type AccountingTab =
 
 export type AccountingEntryKind = 'offline_income' | 'expense'
 export type AccountingTimeRange = 'all' | 'day' | 'week' | 'month' | 'custom'
-export type AccountingTimeGranularity = 'day' | 'week' | 'month'
+export type AccountingTimeGranularity = 'hour' | 'day' | 'week'
 
 export interface ApiResponse<T = unknown> {
   success?: boolean

@@ -21,14 +21,11 @@ For commercial licensing, please contact support@quantumnous.com
 export const STATIC_I18N_KEYS = [
   // Accounting filters and mutation messages referenced through constants.
   '1 Day',
-  '1 Week',
-  '1 Month',
+  '7 Days',
+  '30 Days',
+  'Hour',
   'Day',
   'Week',
-  'Month',
-  'By day',
-  'By week',
-  'By month',
   'All',
   'WeChat Pay',
   'Alipay',

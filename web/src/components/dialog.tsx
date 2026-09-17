@@ -36,6 +36,7 @@ type DialogProps = React.ComponentProps<typeof DialogRoot> & {
   trigger?: React.ReactElement
   footer?: React.ReactNode
   contentHeight?: React.CSSProperties['height']
+  naturalContentHeight?: boolean
   contentClassName?: string
   headerClassName?: string
   titleClassName?: string
@@ -56,6 +57,7 @@ export function Dialog({
   trigger,
   footer,
   contentHeight = 'auto',
+  naturalContentHeight = false,
   contentClassName,
   headerClassName,
   titleClassName,
@@ -78,9 +80,11 @@ export function Dialog({
         initialFocus={initialFocus}
         showCloseButton={showCloseButton}
         style={
-          {
-            '--dialog-content-height': contentHeight,
-          } as React.CSSProperties
+          naturalContentHeight
+            ? undefined
+            : ({
+                '--dialog-content-height': contentHeight,
+              } as React.CSSProperties)
         }
       >
         <DialogHeader
@@ -96,8 +100,8 @@ export function Dialog({
 
         <div
           className={cn(
-            '-mx-1 min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain',
-            'h-[var(--dialog-content-height)] max-h-[calc(100vh-14rem)]'
+            '-mx-1 min-h-0 max-h-[calc(100vh-14rem)] overflow-x-hidden overflow-y-auto overscroll-contain',
+            !naturalContentHeight && 'h-[var(--dialog-content-height)]'
           )}
         >
           <div

@@ -25,7 +25,7 @@ import type {
 
 export const DEFAULT_ACCOUNTING_FILTERS: AccountingFilters = {
   range: 'all',
-  granularity: 'day',
+  granularity: 'week',
 }
 
 export const ACCOUNTING_TIME_RANGES: Array<{
@@ -34,17 +34,17 @@ export const ACCOUNTING_TIME_RANGES: Array<{
 }> = [
   { value: 'all', labelKey: 'All' },
   { value: 'day', labelKey: '1 Day' },
-  { value: 'week', labelKey: '1 Week' },
-  { value: 'month', labelKey: '1 Month' },
+  { value: 'week', labelKey: '7 Days' },
+  { value: 'month', labelKey: '30 Days' },
 ]
 
 export const ACCOUNTING_GRANULARITIES: Array<{
   value: AccountingTimeGranularity
   labelKey: string
 }> = [
-  { value: 'day', labelKey: 'By day' },
-  { value: 'week', labelKey: 'By week' },
-  { value: 'month', labelKey: 'By month' },
+  { value: 'hour', labelKey: 'Hour' },
+  { value: 'day', labelKey: 'Day' },
+  { value: 'week', labelKey: 'Week' },
 ]
 
 export const ACCOUNTING_PAYMENT_METHODS = [
