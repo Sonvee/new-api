@@ -17,18 +17,18 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useQuery } from '@tanstack/react-query'
-import { ChartNoAxesCombined, Plus } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { Plus } from 'lucide-react'
+import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { EmptyState } from '@/components/empty-state'
 import { SectionPageLayout } from '@/components/layout'
+import { LoadingState } from '@/components/loading-state'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { getUserQuotaStats } from '@/features/users/api'
 import { requireServerSuccess } from '@/lib/server-error-message'
 
-import { getAccountingStats } from './api'
+import { getAccountingStats, getAccountingTrend } from './api'
 import { AccountingDeleteDialog } from './components/accounting-delete-dialog'
 import { AccountingEntryDialog } from './components/accounting-entry-dialog'
 import { AccountingFilterDialog } from './components/accounting-filter-dialog'
@@ -43,6 +43,12 @@ import type {
   AccountingTab,
 } from './types'
 
+const AccountingTrendChart = lazy(() =>
+  import('./components/accounting-trend-chart').then((module) => ({
+    default: module.AccountingTrendChart,
+  }))
+)
+
 export function Accounting() {
   const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState<AccountingTab>('online_income')
@@ -55,6 +61,15 @@ export function Accounting() {
   const statsQuery = useQuery({
     queryKey: ['accounting', 'stats', timeQuery],
     queryFn: async () => requireServerSuccess(await getAccountingStats(timeQuery)),
+  })
+  const trendQuery = useQuery({
+    queryKey: ['accounting', 'trend', timeQuery, filters.granularity],
+    queryFn: async () =>
+      requireServerSuccess(await getAccountingTrend({
+        ...timeQuery,
+        granularity: filters.granularity,
+      })),
+    enabled: activeTab === 'analytics',
   })
   const quotaQuery = useQuery({
     queryKey: ['user-quota-stats'],
@@ -81,7 +96,7 @@ export function Accounting() {
     <SectionPageLayout fixedContent>
       <SectionPageLayout.Title>{t('Accounting')}</SectionPageLayout.Title>
       <SectionPageLayout.Content>
-        <div className='flex h-full min-h-0 flex-col gap-4'>
+        <div className='flex h-full min-h-0 min-w-0 flex-col gap-4'>
           <AccountingStatsCards
             stats={statsQuery.data?.data}
             remainingQuota={quotaQuery.data?.remaining_quota}
@@ -127,15 +142,18 @@ export function Accounting() {
             </div>
           </div>
 
-          <div className='min-h-0 flex-1'>
+          <div className='min-h-0 min-w-0 flex-1'>
             {activeTab === 'analytics' ? (
-              <EmptyState
-                bordered
-                icon={ChartNoAxesCombined}
-                title={t('Analytics is coming soon')}
-                description={t('Chart analysis will be added in a future update.')}
-                className='h-full min-h-[260px]'
-              />
+              <Suspense fallback={<LoadingState className='h-full' />}>
+                <AccountingTrendChart
+                  points={trendQuery.data?.data?.items}
+                  loading={trendQuery.isLoading}
+                  error={trendQuery.isError}
+                  onRetry={() => {
+                    void trendQuery.refetch()
+                  }}
+                />
+              </Suspense>
             ) : (
               <AccountingTable
                 key={activeTab}

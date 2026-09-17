@@ -17,6 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import type {
+  AccountingChartType,
   AccountingFilters,
   AccountingTimeGranularity,
   AccountingTimeRange,
@@ -60,3 +61,11 @@ export const ACCOUNTING_SUCCESS_MESSAGES = {
   UPDATED: 'Accounting entry updated',
   DELETED: 'Accounting entry deleted',
 } as const
+
+export const ACCOUNTING_CHART_OPTIONS: Array<{
+  value: AccountingChartType
+  labelKey: string
+}> = [
+  { value: 'bar', labelKey: 'Bar Chart' },
+  { value: 'area', labelKey: 'Area Chart' },
+]

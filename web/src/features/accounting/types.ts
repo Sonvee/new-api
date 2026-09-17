@@ -106,3 +106,24 @@ export type AccountingEntriesResponse = ApiResponse<
   AccountingPage<AccountingEntryRecord>
 >
 export type AccountingStatsResponse = ApiResponse<AccountingStats>
+
+export type AccountingChartType = 'bar' | 'area'
+
+/** 服务端日历桶的开始日期，直接展示，不按浏览器时区二次转换。 */
+export interface AccountingTrendPoint {
+  time: string
+  total_income_cents: number
+  total_expense_cents: number
+  gross_profit_cents: number
+}
+
+export interface AccountingTrend {
+  granularity: AccountingTimeGranularity
+  items: AccountingTrendPoint[]
+}
+
+export interface AccountingTrendQuery extends AccountingTimeQuery {
+  granularity: AccountingTimeGranularity
+}
+
+export type AccountingTrendResponse = ApiResponse<AccountingTrend>

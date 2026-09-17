@@ -25,6 +25,8 @@ import type {
   AccountingOnlineIncomeResponse,
   AccountingStatsResponse,
   AccountingTimeQuery,
+  AccountingTrendQuery,
+  AccountingTrendResponse,
   ApiResponse,
   AccountingEntryRecord,
 } from './types'
@@ -91,5 +93,15 @@ export async function deleteAccountingEntry(
   id: number
 ): Promise<ApiResponse> {
   const response = await api.delete(`/api/accounting/entries/${id}`)
+  return response.data
+}
+
+/** 查询按服务端日历粒度聚合的人民币财务趋势，不从分页列表重算。 */
+export async function getAccountingTrend(
+  query: AccountingTrendQuery
+): Promise<AccountingTrendResponse> {
+  const response = await api.get('/api/accounting/trend', {
+    params: { ...buildTimeParams(query), granularity: query.granularity },
+  })
   return response.data
 }
