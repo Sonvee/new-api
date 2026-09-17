@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { VChart } from '@visactor/react-vchart'
 import { AreaChart, BarChart3, ChartNoAxesCombined } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ErrorState } from '@/components/error-state'
@@ -34,12 +34,17 @@ import { VCHART_OPTION } from '@/lib/vchart'
 
 import { ACCOUNTING_CHART_OPTIONS } from '../constants'
 import { createAccountingTrendSpec } from '../lib/charts'
-import type { AccountingChartType, AccountingTrendPoint } from '../types'
+import type {
+  AccountingChartType,
+  AccountingTimeGranularity,
+  AccountingTrendPoint,
+} from '../types'
 
 interface AccountingTrendChartProps {
   points?: AccountingTrendPoint[]
   loading: boolean
   error: boolean
+  granularity: AccountingTimeGranularity
   onRetry: () => void
 }
 
@@ -60,19 +65,6 @@ export function AccountingTrendChart(props: AccountingTrendChartProps) {
   const [readyTheme, setReadyTheme] = useState<string>()
   const [themeError, setThemeError] = useState(false)
   const [themeRevision, setThemeRevision] = useState(0)
-  const [visiblePoints, setVisiblePoints] = useState(7)
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-    const observer = new ResizeObserver((entries) => {
-      const width = entries[0]?.contentRect.width ?? 0
-      setVisiblePoints(Math.max(2, Math.floor((width - 130) / 90)))
-    })
-    observer.observe(container)
-    return () => observer.disconnect()
-  }, [])
 
   useEffect(() => {
     let active = true
@@ -106,15 +98,19 @@ export function AccountingTrendChart(props: AccountingTrendChartProps) {
         chartType,
         t,
         COLORS,
-        visiblePoints
+        props.granularity
       ),
-    [props.points, chartType, t, visiblePoints]
+    [props.points, chartType, t, props.granularity]
   )
 
   let content = (
     <VChart
       key={`${chartType}-${resolvedTheme}-${customization.preset}`}
-      spec={{ ...spec, theme: resolvedTheme === 'dark' ? 'dark' : 'light' }}
+      spec={{
+        ...spec,
+        theme: resolvedTheme === 'dark' ? 'dark' : 'light',
+        background: 'transparent',
+      }}
       option={VCHART_OPTION}
     />
   )
@@ -171,10 +167,7 @@ export function AccountingTrendChart(props: AccountingTrendChartProps) {
             })}
           </div>
         </div>
-        <div
-          ref={containerRef}
-          className='min-h-0 min-w-0 flex-1 p-1.5 sm:p-2'
-        >
+        <div className='min-h-0 min-w-0 flex-1 p-1.5 sm:p-2'>
           {content}
         </div>
       </section>

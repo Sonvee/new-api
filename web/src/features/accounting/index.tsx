@@ -149,6 +149,7 @@ export function Accounting() {
                   points={trendQuery.data?.data?.items}
                   loading={trendQuery.isLoading}
                   error={trendQuery.isError}
+                  granularity={filters.granularity}
                   onRetry={() => {
                     void trendQuery.refetch()
                   }}
