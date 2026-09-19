@@ -51,6 +51,7 @@ export const userSchema = z.object({
   aff_valid_count: z.number().optional(),
   aff_quota: z.number().optional(),
   aff_history_quota: z.number().optional(),
+  aff_reward_quota: z.number().optional(),
   aff_commission_quota: z.number().optional(),
   inviter_id: z.number().optional(),
   linux_do_id: z.string().optional(),
