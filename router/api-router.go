@@ -292,6 +292,7 @@ func SetApiRouter(router *gin.Engine) {
 		}
 
 		publicUsageRoute := apiRouter.Group("/public/usage")
+		publicUsageRoute.Use(middleware.CORS())
 		{
 			publicUsageRoute.GET("/tokens", controller.GetPublicTokenUsage)
 		}
