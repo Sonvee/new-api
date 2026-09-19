@@ -47,6 +47,27 @@ func GetGroupEnabledModels(group string) []string {
 	return models
 }
 
+func GetGroupEnabledModelsForPlayground(group string) []string {
+	var abilities []Ability
+	if err := DB.Where(commonGroupCol+" = ? and enabled = ?", group, true).Find(&abilities).Error; err != nil {
+		return []string{}
+	}
+
+	abilities = filterAbilitiesByConstraints(abilities, "", []dto.ChannelFilter{
+		{Kind: dto.FilterPlaygroundDisabled},
+	})
+	models := make([]string, 0, len(abilities))
+	seen := make(map[string]struct{}, len(abilities))
+	for _, ability := range abilities {
+		if _, ok := seen[ability.Model]; ok {
+			continue
+		}
+		seen[ability.Model] = struct{}{}
+		models = append(models, ability.Model)
+	}
+	return models
+}
+
 func GetEnabledModels() []string {
 	var models []string
 	// Find distinct models
@@ -183,7 +204,7 @@ func filterAbilitiesByConstraints(abilities []Ability, modelName string, filters
 
 	var channels []*Channel
 	if err := DB.Where("id IN ?", channelIds).Find(&channels).Error; err != nil {
-		if identityFilterRequiresKey(filters) {
+		if channelFilterRequiresChannelData(filters) {
 			return nil
 		}
 		return abilities
@@ -204,9 +225,10 @@ func filterAbilitiesByConstraints(abilities []Ability, modelName string, filters
 	return filtered
 }
 
-func identityFilterRequiresKey(filters []dto.ChannelFilter) bool {
+func channelFilterRequiresChannelData(filters []dto.ChannelFilter) bool {
 	for _, filter := range filters {
-		if filter.Kind == dto.FilterTaskPluginIdentity && filter.TaskPluginKey != "" {
+		if filter.Kind == dto.FilterPlaygroundDisabled ||
+			(filter.Kind == dto.FilterTaskPluginIdentity && filter.TaskPluginKey != "") {
 			return true
 		}
 	}

@@ -6931,6 +6931,8 @@
     "Zhipu": "Zhipu",
     "Zhipu GLM": "Zhipu GLM",
     "Zhipu V4": "Zhipu V 4",
-    "Zoom": "ズーム"
+    "Zoom": "ズーム",
+    "Disable Playground Calls": "Playgroundからの呼び出しを禁止",
+    "Do not select this channel for Playground requests": "Playgroundリクエストでこのチャネルを選択しない"
   }
 }

@@ -1948,6 +1948,30 @@ export function ChannelMutateDrawer({
     />
   )
 
+  const playgroundFields = (
+    <FormField
+      control={form.control}
+      name='disable_playground'
+      render={({ field }) => (
+        <FormItem className='flex items-center justify-between px-4 py-3'>
+          <div className='space-y-0.5'>
+            <FormLabel>{t('Disable Playground Calls')}</FormLabel>
+            <FormDescription>
+              {t('Do not select this channel for Playground requests')}
+            </FormDescription>
+          </div>
+          <FormControl>
+            <Switch
+              disabled={sensitiveLocked}
+              checked={field.value}
+              onCheckedChange={field.onChange}
+            />
+          </FormControl>
+        </FormItem>
+      )}
+    />
+  )
+
   const formatFields = currentType === 1 && (
     <FormField
       control={form.control}
@@ -4687,6 +4711,7 @@ export function ChannelMutateDrawer({
                 className='space-y-4 disabled:opacity-60'
               >
                 {taskPollingFields}
+                {playgroundFields}
                 {proxyFields}
                 {httpProtocolFields}
                 {httpShardsFields}

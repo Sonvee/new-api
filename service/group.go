@@ -121,6 +121,21 @@ func GetGroupsEnabledModels(groups []string) []string {
 	return models
 }
 
+// GetPlaygroundGroupsEnabledModels returns enabled models while excluding channels blocked from Playground calls.
+func GetPlaygroundGroupsEnabledModels(groups []string) []string {
+	seen := make(map[string]struct{})
+	models := make([]string, 0)
+	for _, group := range groups {
+		for _, modelName := range model.GetGroupEnabledModelsForPlayground(group) {
+			if _, ok := seen[modelName]; !ok {
+				seen[modelName] = struct{}{}
+				models = append(models, modelName)
+			}
+		}
+	}
+	return models
+}
+
 // GetUserGroupRatio 获取用户使用某个分组的倍率
 // userGroup 用户分组
 // group 需要获取倍率的分组

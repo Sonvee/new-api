@@ -6931,6 +6931,8 @@
     "Zhipu": "智譜",
     "Zhipu GLM": "智譜GLM",
     "Zhipu V4": "智譜 V4",
-    "Zoom": "縮放"
+    "Zoom": "縮放",
+    "Disable Playground Calls": "禁止遊樂場呼叫",
+    "Do not select this channel for Playground requests": "不要在遊樂場請求中選擇此渠道"
   }
 }
