@@ -79,10 +79,10 @@ git push origin custom
 # 先登录 dockerhub
 docker login
 
-# 构建镜像
+# 构建镜像 - 别忘了更新版本号，此处 1.0.1 仅示例
 docker build --platform linux/amd64 -t sonve/new-api:1.0.1 -t sonve/new-api:latest .
 
-# 上传镜像
+# 上传镜像 - 别忘了更新版本号，此处 1.0.1 仅示例
 docker push sonve/new-api:1.0.1
 docker push sonve/new-api:latest
 ```
