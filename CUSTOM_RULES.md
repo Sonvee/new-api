@@ -85,4 +85,10 @@ docker build --platform linux/amd64 -t sonve/new-api:1.0.1 -t sonve/new-api:late
 # 上传镜像 - 别忘了更新版本号，此处 1.0.1 仅示例
 docker push sonve/new-api:1.0.1
 docker push sonve/new-api:latest
+
+# 服务器上拉取镜像
+docker compose pull
+
+# 服务器上构建镜像
+docker compose up -d --no-build --force-recreate
 ```
