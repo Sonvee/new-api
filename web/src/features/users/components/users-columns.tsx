@@ -20,7 +20,7 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { useTranslation } from 'react-i18next'
 
 import { ActivityTimeCell } from '@/components/activity-time-cell'
-import { BadgeCell } from '@/components/data-table'
+import { BadgeCell, TruncatedCell } from '@/components/data-table'
 import { GroupBadge } from '@/components/group-badge'
 import { LongText } from '@/components/long-text'
 import { StatusBadge } from '@/components/status-badge'
@@ -235,6 +235,7 @@ export function useUsersColumns(): ColumnDef<User>[] {
         const affCount = user.aff_count || 0
         const affValidCount = user.aff_valid_count || 0
         const affHistoryQuota = user.aff_history_quota || 0
+        const affRewardQuota = user.aff_reward_quota || 0
         const affCommissionQuota = user.aff_commission_quota || 0
         const inviterId = user.inviter_id || 0
 
@@ -259,18 +260,33 @@ export function useUsersColumns(): ColumnDef<User>[] {
               affHistoryQuota !== 0 ||
               affCommissionQuota !== 0
             ) && (
-              <LongText>
+              <TruncatedCell
+                tabIndex={0}
+                className='cursor-help'
+                tooltipContent={
+                  <div className='space-y-1'>
+                    <div>
+                      {t('Invitation reward')}:{' '}
+                      <span className='tabular-nums'>
+                        {formatQuota(affRewardQuota)}
+                      </span>
+                    </div>
+                    <div>
+                      {t('Commission rebate')}:{' '}
+                      <span className='tabular-nums'>
+                        {formatQuota(affCommissionQuota)}
+                      </span>
+                    </div>
+                  </div>
+                }
+              >
                 {t('Invited {{count}} users', { count: affCount })} ·{' '}
                 {t('Activated {{count}} users', { count: affValidCount })} ·{' '}
                 {t('Earnings')}:{' '}
                 <span className='tabular-nums'>
                   {formatQuota(affHistoryQuota)}
-                </span>{' · '}
-                {t('Commission')}:{' '}
-                <span className='tabular-nums'>
-                  {formatQuota(affCommissionQuota)}
                 </span>
-              </LongText>
+              </TruncatedCell>
             )}
             {inviterId > 0 && (
               <LongText className='text-muted-foreground'>
