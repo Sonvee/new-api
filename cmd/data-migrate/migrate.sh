@@ -113,6 +113,7 @@ if [[ "$legacy_dump" != /* ]]; then
   legacy_dump="$compose_dir/$legacy_dump"
 fi
 [[ -s "$legacy_dump" ]] || die "备份文件不存在或为空：$legacy_dump"
+[[ "$db_name" =~ ^[A-Za-z0-9_-]+$ ]] || die "数据库名称包含不支持的字符：$db_name"
 
 cd "$compose_dir"
 compose=(docker compose -f "$compose_file")
@@ -207,9 +208,9 @@ fi
 
 log "删除并重新创建目标数据库"
 "${compose[@]}" exec -T "$db_service" psql -v ON_ERROR_STOP=1 -U "$db_user" -d postgres \
-  -v db_name="$db_name" -c 'DROP DATABASE :"db_name" WITH (FORCE);'
+  -c "DROP DATABASE \"$db_name\" WITH (FORCE);"
 "${compose[@]}" exec -T "$db_service" psql -v ON_ERROR_STOP=1 -U "$db_user" -d postgres \
-  -v db_name="$db_name" -c 'CREATE DATABASE :"db_name";'
+  -c "CREATE DATABASE \"$db_name\";"
 
 restore_log="$report_dir/${timestamp}-restore.log"
 log "恢复旧数据库：$legacy_dump"
