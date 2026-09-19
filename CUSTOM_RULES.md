@@ -72,3 +72,17 @@ git push origin custom
 
 - 必须明确说明：如果开发者没有执行上述命令，正在运行的后端容器可能仍是旧版本，无法反映当前工作区的后端改动。
 - 仅修改前端且前端使用开发服务器热更新时，不需要提醒重建 `new-api` 后端容器；如果前端由镜像提供，则另行提醒重建对应的前端服务。
+
+## 上传 docker 镜像
+
+```bash
+# 先登录 dockerhub
+docker login
+
+# 构建镜像
+docker build --platform linux/amd64 -t sonve/new-api:1.0.1 -t sonve/new-api:latest .
+
+# 上传镜像
+docker push sonve/new-api:1.0.1
+docker push sonve/new-api:latest
+```
