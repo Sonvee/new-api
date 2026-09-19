@@ -18,6 +18,7 @@ type preflight struct {
 	walletLedgers          int64
 	legacyRelationsMissing int64
 	affiliateBalanceRows   int64
+	affiliateHistoryRows   int64
 	authSessions           int64
 	authFlows              int64
 }
@@ -66,7 +67,7 @@ func runPreflight(db *gorm.DB, report *report) (preflight, error) {
 		return result, fmt.Errorf("read migration marker: %w", err)
 	}
 	report.add("check", "migration marker", markerDetail(result.marker))
-	if result.marker != "" && result.marker != migrationVersion {
+	if result.marker != "" && result.marker != migrationVersion && result.marker != previousMigrationVersion {
 		return result, fmt.Errorf("database was migrated by unsupported version %q", result.marker)
 	}
 
@@ -152,6 +153,14 @@ func runPreflight(db *gorm.DB, report *report) (preflight, error) {
 		report.add("check", "repeat execution", "migration already completed; apply will not write again")
 		return result, nil
 	}
+	if result.marker == previousMigrationVersion {
+		result.affiliateHistoryRows, err = countNonZeroRows(db, "users", "aff_history <> COALESCE(aff_reward_quota, 0) + COALESCE(aff_commission_quota, 0)")
+		if err != nil {
+			return result, fmt.Errorf("inspect affiliate history: %w", err)
+		}
+		report.add("plan", "affiliate history", fmt.Sprintf("rows_to_reconcile=%d", result.affiliateHistoryRows))
+		return result, nil
+	}
 	for _, table := range mergeSensitiveTables {
 		count, countErr := countRows(db, table)
 		if countErr != nil {
@@ -235,12 +244,16 @@ func countMissingLegacyRelations(db *gorm.DB) (int64, error) {
 	return count, err
 }
 
-func readMarker(db *gorm.DB) (string, error) {
+func readOption(db *gorm.DB, key string) (string, error) {
 	var row struct {
 		Value string
 	}
-	if err := db.Raw(`SELECT value FROM options WHERE key = ?`, markerKey).Scan(&row).Error; err != nil {
+	if err := db.Raw(`SELECT value FROM options WHERE key = ?`, key).Scan(&row).Error; err != nil {
 		return "", err
 	}
 	return strings.TrimSpace(row.Value), nil
+}
+
+func readMarker(db *gorm.DB) (string, error) {
+	return readOption(db, markerKey)
 }

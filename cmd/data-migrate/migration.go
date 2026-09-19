@@ -12,6 +12,10 @@ func runDryRun(db *gorm.DB, pf preflight, report *report) error {
 		report.add("dry-run", "migration", "already completed; no changes planned")
 		return nil
 	}
+	if pf.marker == previousMigrationVersion {
+		report.add("dry-run", "reconcile affiliate history", fmt.Sprintf("users=%d", pf.affiliateHistoryRows))
+		return nil
+	}
 	report.add("dry-run", "backfill invite relations", fmt.Sprintf("rows=%d", pf.legacyRelationsMissing))
 	report.add("dry-run", "reconcile affiliate balances", fmt.Sprintf("rows=%d", pf.affiliateBalanceRows))
 	report.add("dry-run", "rebuild persisted affiliate fields", fmt.Sprintf("users=%d", pf.users))
@@ -24,6 +28,20 @@ func runApply(db *gorm.DB, pf preflight, report *report) error {
 	if pf.marker == migrationVersion {
 		report.add("apply", "migration", "already completed; no changes made")
 		return nil
+	}
+	if pf.marker == previousMigrationVersion {
+		return db.Transaction(func(tx *gorm.DB) error {
+			if rows, err := reconcileAffiliateHistory(tx); err != nil {
+				return err
+			} else {
+				report.add("apply", "reconcile affiliate history", fmt.Sprintf("users=%d", rows))
+			}
+			if err := writeMarker(tx); err != nil {
+				return err
+			}
+			report.add("apply", "migration marker", migrationVersion)
+			return nil
+		})
 	}
 	return db.Transaction(func(tx *gorm.DB) error {
 		if rows, err := backfillLegacyRelations(tx); err != nil {
@@ -50,6 +68,9 @@ func runApply(db *gorm.DB, pf preflight, report *report) error {
 			return err
 		} else {
 			report.add("apply", "invalidate authentication state", fmt.Sprintf("user_sessions=%d auth_flows=%d users=%d", sessions, flows, users))
+		}
+		if err := writeAuthInvalidationMarker(tx); err != nil {
+			return err
 		}
 		if err := writeMarker(tx); err != nil {
 			return err
@@ -98,29 +119,46 @@ func reconcileAffiliateBalances(tx *gorm.DB) (int64, error) {
 	return result.RowsAffected, result.Error
 }
 
+func reconcileAffiliateHistory(tx *gorm.DB) (int64, error) {
+	result := tx.Exec(`
+		UPDATE users
+		SET aff_history = COALESCE(aff_reward_quota, 0) + COALESCE(aff_commission_quota, 0)
+		WHERE aff_history <> COALESCE(aff_reward_quota, 0) + COALESCE(aff_commission_quota, 0)`)
+	return result.RowsAffected, result.Error
+}
+
 func rebuildAffiliateFields(tx *gorm.DB) (int64, error) {
 	result := tx.Exec(`
+		WITH affiliate_totals AS (
+			SELECT
+				u.id,
+				CASE
+					WHEN EXISTS (SELECT 1 FROM invite_rewards ir WHERE ir.recipient_id = u.id)
+					THEN COALESCE((
+						SELECT SUM(ir.quota) FROM invite_rewards ir
+						WHERE ir.recipient_id = u.id AND ir.status = 'success'
+					), 0)
+					ELSE COALESCE(u.aff_history, 0)
+				END AS reward_quota,
+				COALESCE((
+					SELECT SUM(rc.commission_quota) FROM recharge_commissions rc
+					WHERE rc.inviter_id = u.id AND rc.status = 'success'
+				), 0) AS commission_quota
+			FROM users AS u
+		)
 		UPDATE users AS u
 		SET aff_count = (
-			SELECT COUNT(*) FROM invite_relations r WHERE r.inviter_id = u.id
-		),
-		aff_valid_count = (
-			SELECT COUNT(*) FROM invite_relations r WHERE r.inviter_id = u.id AND r.status = 'active'
-		),
-		aff_reward_quota = CASE
-			WHEN EXISTS (SELECT 1 FROM invite_rewards ir WHERE ir.recipient_id = u.id)
-			THEN COALESCE((
-				SELECT SUM(ir.quota) FROM invite_rewards ir
-				WHERE ir.recipient_id = u.id AND ir.status = 'success'
-			), 0)
-			ELSE COALESCE(u.aff_history, 0)
-		END,
-		aff_commission_quota = COALESCE((
-			SELECT SUM(rc.commission_quota) FROM recharge_commissions rc
-			WHERE rc.inviter_id = u.id AND rc.status = 'success'
-		), 0),
-		affiliate_activated = (u.inviter_id > 0)
-	`)
+				SELECT COUNT(*) FROM invite_relations r WHERE r.inviter_id = u.id
+			),
+			aff_valid_count = (
+				SELECT COUNT(*) FROM invite_relations r WHERE r.inviter_id = u.id AND r.status = 'active'
+			),
+			aff_reward_quota = totals.reward_quota,
+			aff_commission_quota = totals.commission_quota,
+			aff_history = totals.reward_quota + totals.commission_quota,
+			affiliate_activated = (u.inviter_id > 0)
+		FROM affiliate_totals AS totals
+		WHERE u.id = totals.id`)
 	return result.RowsAffected, result.Error
 }
 
@@ -161,10 +199,18 @@ func invalidateAuthenticationState(tx *gorm.DB) (int64, int64, int64, error) {
 	return sessions.RowsAffected, flows.RowsAffected, users.RowsAffected, nil
 }
 
-func writeMarker(tx *gorm.DB) error {
+func writeOption(tx *gorm.DB, key, value string) error {
 	return tx.Exec(`
 		INSERT INTO options (key, value) VALUES (?, ?)
-		ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`, markerKey, migrationVersion).Error
+		ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`, key, value).Error
+}
+
+func writeMarker(tx *gorm.DB) error {
+	return writeOption(tx, markerKey, migrationVersion)
+}
+
+func writeAuthInvalidationMarker(tx *gorm.DB) error {
+	return writeOption(tx, authInvalidationMarkerKey, migrationVersion)
 }
 
 func runVerify(db *gorm.DB, report *report) error {
@@ -176,6 +222,11 @@ func runVerify(db *gorm.DB, report *report) error {
 		return fmt.Errorf("migration marker is %q, expected %q", marker, migrationVersion)
 	}
 	report.add("verify", "migration marker", "correct")
+
+	authMarker, err := readOption(db, authInvalidationMarkerKey)
+	if err != nil {
+		return fmt.Errorf("read authentication migration marker: %w", err)
+	}
 
 	checks := []struct {
 		name  string
@@ -191,11 +242,15 @@ func runVerify(db *gorm.DB, report *report) error {
 		},
 		{
 			name:  "invitation reward quota",
-			query: `SELECT COUNT(*) FROM users u WHERE u.aff_reward_quota <> CASE WHEN EXISTS (SELECT 1 FROM invite_rewards ir WHERE ir.recipient_id = u.id) THEN COALESCE((SELECT SUM(ir.quota) FROM invite_rewards ir WHERE ir.recipient_id = u.id AND ir.status = 'success'), 0) ELSE COALESCE(u.aff_history, 0) END`,
+			query: `SELECT COUNT(*) FROM users u WHERE EXISTS (SELECT 1 FROM invite_rewards ir WHERE ir.recipient_id = u.id) AND u.aff_reward_quota <> COALESCE((SELECT SUM(ir.quota) FROM invite_rewards ir WHERE ir.recipient_id = u.id AND ir.status = 'success'), 0)`,
 		},
 		{
 			name:  "commission quota",
 			query: `SELECT COUNT(*) FROM users u WHERE u.aff_commission_quota <> COALESCE((SELECT SUM(rc.commission_quota) FROM recharge_commissions rc WHERE rc.inviter_id = u.id AND rc.status = 'success'), 0)`,
+		},
+		{
+			name:  "affiliate history",
+			query: `SELECT COUNT(*) FROM users u WHERE u.aff_history <> COALESCE(u.aff_reward_quota, 0) + COALESCE(u.aff_commission_quota, 0)`,
 		},
 		{
 			name:  "affiliate activation",
@@ -206,17 +261,23 @@ func runVerify(db *gorm.DB, report *report) error {
 			query: `SELECT COUNT(*) FROM users WHERE aff_quota <> 0`,
 		},
 		{
-			name:  "user sessions invalidated",
-			query: `SELECT COUNT(*) FROM user_sessions`,
-		},
-		{
-			name:  "auth flows invalidated",
-			query: `SELECT COUNT(*) FROM auth_flows`,
-		},
-		{
 			name:  "quota ledgers imported",
 			query: `SELECT COUNT(*) FROM quota_ledgers q WHERE NOT EXISTS (SELECT 1 FROM wallet_ledgers w WHERE w.idempotency_key = 'legacy:quota_ledgers:' || q.id::text)`,
 		},
+	}
+	if authMarker == migrationVersion {
+		checks = append(checks,
+			struct {
+				name  string
+				query string
+			}{name: "user sessions invalidated", query: `SELECT COUNT(*) FROM user_sessions`},
+			struct {
+				name  string
+				query string
+			}{name: "auth flows invalidated", query: `SELECT COUNT(*) FROM auth_flows`},
+		)
+	} else {
+		report.add("verify", "authentication state", "preserved by corrective migration")
 	}
 	for _, check := range checks {
 		var count int64

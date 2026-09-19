@@ -10,8 +10,10 @@ import (
 )
 
 const (
-	migrationVersion = "legacy-main-to-custom-20260918"
-	markerKey        = "data-migrate:legacy-main-to-custom"
+	migrationVersion          = "legacy-main-to-custom-20260919"
+	previousMigrationVersion  = "legacy-main-to-custom-20260918"
+	markerKey                 = "data-migrate:legacy-main-to-custom"
+	authInvalidationMarkerKey = "data-migrate:auth-invalidated"
 )
 
 type runMode string
