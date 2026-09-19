@@ -7,22 +7,19 @@
 ```bash
 cd /旧项目目录
 docker compose stop new-api
-docker compose exec -T postgres pg_dump -U root -d new-api > /root/new-api-legacy.sql
+docker compose exec -T postgres pg_dump -U root -d new-api > ./new-api-legacy.sql
 ```
 
 ### 2. 上传文件到新服务器
 
-上传以下两个文件：
+将以下两个文件放到新服务器项目根目录：
 
 ```text
-/root/new-api-legacy.sql
-cmd/data-migrate/migrate.sh
-```
+本地：cmd/data-migrate/migrate.sh
+服务器：/www/wwwroot/dk_project/new-api/migrate.sh
 
-将 `migrate.sh` 放到新服务器项目根目录：
-
-```text
-/www/wwwroot/dk_project/new-api/migrate.sh
+本地：new-api-legacy.sql
+服务器：/www/wwwroot/dk_project/new-api/new-api-legacy.sql
 ```
 
 ### 3. 新服务器执行迁移
@@ -30,8 +27,10 @@ cmd/data-migrate/migrate.sh
 ```bash
 cd /www/wwwroot/dk_project/new-api
 chmod +x migrate.sh
-./migrate.sh --dump /root/new-api-legacy.sql
+./migrate.sh --dump ./new-api-legacy.sql
 ```
+
+不要将 `new-api-legacy.sql` 提交到 Git 或放入 Docker 镜像。
 
 ### 4. 完成标准
 
