@@ -303,6 +303,7 @@ export function useUsersColumns(): ColumnDef<User>[] {
             </div>
           )
         },
+      },
       {
         accessorKey: 'created_at',
         header: t('Time'),
