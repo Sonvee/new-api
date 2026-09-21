@@ -9,37 +9,76 @@
 - `feature/*` 是短期功能分支，应从 `custom` 创建，并在功能完成后合并回 `custom`。
 - 不得将 `custom` 或其定制提交合并回 `main`。
 
-## 同步上游
+## 同步官方代码
 
-先更新 `main`，再将更新带入 `custom`：
+`main` 只用于跟踪官方代码，`custom` 才是定制开发分支。不要把定制提交合并回 `main`。
+
+### 更新本地 `main`
+
+在 GitHub Fork 页面完成 **Sync fork** 后，再在本地获取远程最新代码：
 
 ```bash
-git fetch upstream
+git fetch origin --prune
 git switch main
-git merge --ff-only upstream/main
-git push origin main
+git pull --ff-only origin main
 ```
 
-个人维护 `custom` 时，优先使用 Rebase：
+如果 `main` 有未提交修改，先停止操作并处理工作区，不要直接覆盖本地修改。
+
+### 将官方更新带入 `custom`
+
+个人维护或可以改写远程历史时，推荐使用 Rebase。同步前先确认工作区干净，并创建备份分支：
 
 ```bash
-git fetch origin
 git switch custom
-git branch backup/custom-YYYYMMDD
+git status --short --branch
+git branch backup/custom-before-sync-YYYYMMDD
 git rebase origin/main
+```
+
+Rebase 会自动重放定制提交；只有官方代码与定制代码实际修改了同一处时，才需要手动解决冲突，不需要每次重新手工合并所有定制功能。
+
+发生冲突时：
+
+```bash
+# 查看冲突文件
+git status
+
+# 编辑文件，保留官方更新并重新应用必要的定制逻辑
+git add <已解决的文件>
+git rebase --continue
+```
+
+如果确认本次同步不应继续：
+
+```bash
+git rebase --abort
+```
+
+Rebase 完成后，检查冲突标记并运行受影响的测试或构建：
+
+```bash
+git grep -n -E '^(<<<<<<<|=======|>>>>>>>)'
+```
+
+由于 Rebase 会改写 `custom` 的提交历史，推送时必须使用：
+
+```bash
 git push --force-with-lease origin custom
 ```
 
-多人共同维护 `custom` 时，使用 Merge，避免改写共享历史：
+禁止使用裸 `git push --force`。
+
+如果 `custom` 由多人共同维护且不能改写远程历史，则改用 Merge：
 
 ```bash
-git fetch origin
 git switch custom
+git fetch origin --prune
 git merge origin/main
 git push origin custom
 ```
 
-上游更新应尽早同步，避免长期积累差异。每次同步后，至少运行受影响模块的测试或构建。
+Merge 会保留原有提交历史，但可能产生一个合并提交。无论使用 Rebase 还是 Merge，都应尽早同步官方更新，避免一次性积累大量冲突。
 
 ## 二次开发原则
 
