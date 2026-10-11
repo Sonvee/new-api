@@ -205,6 +205,10 @@ func TestRechargeEpayCreditsQuotaExactlyOnce(t *testing.T) {
 	assert.False(t, alreadyDone)
 	assert.Equal(t, 2*500000, getUserQuotaForPaymentGuardTest(t, user.Id))
 
+	var ledgerCount int64
+	require.NoError(t, DB.Model(&WalletLedger{}).Where("user_id = ? AND source_id = ?", user.Id, order.TradeNo).Count(&ledgerCount).Error)
+	assert.Equal(t, int64(1), ledgerCount)
+
 	reloaded := GetTopUpByTradeNo(order.TradeNo)
 	require.NotNil(t, reloaded)
 	assert.Equal(t, common.TopUpStatusSuccess, reloaded.Status)
@@ -214,6 +218,8 @@ func TestRechargeEpayCreditsQuotaExactlyOnce(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, alreadyDone)
 	assert.Equal(t, 2*500000, getUserQuotaForPaymentGuardTest(t, user.Id))
+	require.NoError(t, DB.Model(&WalletLedger{}).Where("user_id = ? AND source_id = ?", user.Id, order.TradeNo).Count(&ledgerCount).Error)
+	assert.Equal(t, int64(1), ledgerCount)
 }
 
 func TestRechargeEpayKeepsRedisAndDatabaseCreditInSync(t *testing.T) {

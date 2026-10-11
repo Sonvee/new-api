@@ -35,7 +35,12 @@ import {
   requireServerSuccess,
 } from '@/lib/server-error-message'
 
-import { getGroups, getUsers, searchUsers } from '../api'
+import {
+  getGroups,
+  getUserQuotaStats,
+  getUsers,
+  searchUsers,
+} from '../api'
 import {
   USER_STATUS,
   getUserStatusOptions,
@@ -44,6 +49,7 @@ import {
 } from '../constants'
 import type { User, UserSortBy } from '../types'
 import { DataTableBulkActions } from './data-table-bulk-actions'
+import { UsersQuotaStats } from './users-quota-stats'
 import { useUsersColumns } from './users-columns'
 import { useUsers } from './users-provider'
 
@@ -180,6 +186,15 @@ export function UsersTable() {
     placeholderData: (previousData) => previousData,
   })
 
+  const {
+    data: quotaStats,
+    isError: isQuotaStatsError,
+    isLoading: isQuotaStatsLoading,
+  } = useQuery({
+    queryKey: ['users', 'quota-stats', refreshTrigger],
+    queryFn: getUserQuotaStats,
+    meta: { errorToast: false },
+  })
   const users = data?.items || []
 
   const { table } = useDataTable({
@@ -229,6 +244,13 @@ export function UsersTable() {
       toolbarProps={{
         searchPlaceholder: t('Filter by username, name or email...'),
         searchDebounceMs: 500,
+        afterFilters: (
+          <UsersQuotaStats
+            stats={quotaStats}
+            isLoading={isQuotaStatsLoading}
+            isError={isQuotaStatsError}
+          />
+        ),
         filters: [
           {
             columnId: 'status',

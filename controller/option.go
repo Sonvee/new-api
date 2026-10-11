@@ -202,6 +202,18 @@ func UpdateOption(c *gin.Context) {
 			common.ApiErrorT(c, "Payment, redemption, subscription, and invitation reward features are disabled. The administrator must confirm compliance terms before enabling them.")
 			return
 		}
+	case "InvitationActivationThreshold":
+		value, err := strconv.Atoi(option.Value.(string))
+		if err != nil || value < 0 || value > common.MaxWalletQuota {
+			common.ApiErrorMsg(c, "邀请激活阈值必须在 0 到钱包额度上限之间")
+			return
+		}
+	case "CommissionRate":
+		value, err := strconv.Atoi(option.Value.(string))
+		if err != nil || value < 0 || value > 100 {
+			common.ApiErrorMsg(c, "佣金比率必须在 0 到 100 之间")
+			return
+		}
 	default:
 		if isPaymentComplianceOptionKey(option.Key) {
 			common.ApiErrorT(c, "Compliance confirmation fields cannot be changed through the general settings API")

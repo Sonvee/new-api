@@ -21,7 +21,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ActivityTimeCell } from '@/components/activity-time-cell'
-import { BadgeCell } from '@/components/data-table'
+import { BadgeCell, TruncatedCell } from '@/components/data-table'
 import { GroupBadge } from '@/components/group-badge'
 import { LongText } from '@/components/long-text'
 import { StatusBadge } from '@/components/status-badge'
@@ -190,8 +190,8 @@ export function useUsersColumns(): ColumnDef<User>[] {
           const user = row.original
           return <UserQuotaCell remaining={user.quota} used={user.used_quota} />
         },
-        size: 180,
-        minSize: 160,
+        size: 220,
+        minSize: 200,
         meta: { mobileOrder: 40 },
       },
       {
@@ -241,10 +241,18 @@ export function useUsersColumns(): ColumnDef<User>[] {
         cell: ({ row }) => {
           const user = row.original
           const affCount = user.aff_count || 0
+          const affValidCount = user.aff_valid_count || 0
           const affHistoryQuota = user.aff_history_quota || 0
+          const affRewardQuota = user.aff_reward_quota || 0
+          const affCommissionQuota = user.aff_commission_quota || 0
           const inviterId = user.inviter_id || 0
-
-          if (affCount === 0 && affHistoryQuota === 0 && inviterId === 0) {
+          if (
+            affCount === 0 &&
+            affValidCount === 0 &&
+            affHistoryQuota === 0 &&
+            affCommissionQuota === 0 &&
+            inviterId === 0
+          ) {
             return <span className='text-muted-foreground text-sm'>—</span>
           }
 
@@ -253,14 +261,39 @@ export function useUsersColumns(): ColumnDef<User>[] {
               data-table-text='secondary'
               className='min-w-0 space-y-1 text-xs font-normal'
             >
-              {(affCount > 0 || affHistoryQuota !== 0) && (
-                <LongText>
+              {(
+                affCount > 0 ||
+                affValidCount > 0 ||
+                affHistoryQuota !== 0 ||
+                affCommissionQuota !== 0
+              ) && (
+                <TruncatedCell
+                  tabIndex={0}
+                  className='cursor-help'
+                  tooltipContent={
+                    <div className='space-y-1'>
+                      <div>
+                        {t('Invitation reward')}:{' '}
+                        <span className='tabular-nums'>
+                          {formatQuota(affRewardQuota)}
+                        </span>
+                      </div>
+                      <div>
+                        {t('Commission rebate')}:{' '}
+                        <span className='tabular-nums'>
+                          {formatQuota(affCommissionQuota)}
+                        </span>
+                      </div>
+                    </div>
+                  }
+                >
                   {t('Invited {{count}} users', { count: affCount })} ·{' '}
+                  {t('Activated {{count}} users', { count: affValidCount })} ·{' '}
                   {t('Earnings')}:{' '}
                   <span className='tabular-nums'>
                     {formatQuota(affHistoryQuota)}
                   </span>
-                </LongText>
+                </TruncatedCell>
               )}
               {inviterId > 0 && (
                 <LongText className='text-muted-foreground'>
@@ -270,9 +303,6 @@ export function useUsersColumns(): ColumnDef<User>[] {
             </div>
           )
         },
-        size: 240,
-        enableSorting: false,
-        meta: { mobileHidden: true },
       },
       {
         accessorKey: 'created_at',

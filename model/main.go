@@ -322,6 +322,39 @@ func is64BitIntegerType(dbType common.DatabaseType, dataType string) bool {
 	}
 }
 
+func migrateUserSubscriptionSortOrder() error {
+	var userIds []int
+	if err := DB.Model(&UserSubscription{}).
+		Where("sort_order = ?", uninitializedUserSubscriptionSortOrder).
+		Distinct("user_id").
+		Pluck("user_id", &userIds).Error; err != nil {
+		return err
+	}
+	for _, userId := range userIds {
+		if err := DB.Transaction(func(tx *gorm.DB) error {
+			var subscriptions []UserSubscription
+			if err := lockForUpdate(tx).
+				Where("user_id = ?", userId).
+				Order("sort_order desc, end_time desc, id desc").
+				Find(&subscriptions).Error; err != nil {
+				return err
+			}
+			for i := range subscriptions {
+				sortOrder := int64(len(subscriptions) - i)
+				if err := tx.Model(&UserSubscription{}).
+					Where("id = ? AND user_id = ?", subscriptions[i].Id, userId).
+					Update("sort_order", sortOrder).Error; err != nil {
+					return err
+				}
+			}
+			return nil
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func migrateDB() error {
 	if err := migrateTokenKeyUniqueness(DB); err != nil {
 		return err
@@ -343,6 +376,8 @@ func migrateDB() error {
 		&Channel{},
 		&Token{},
 		&User{},
+		&WalletLedger{},
+		&AccountingEntry{},
 		&UserSession{},
 		&AuthFlow{},
 		&ExternalIdentityClaim{},
@@ -378,6 +413,12 @@ func migrateDB() error {
 		&UserAccessToken{},
 	)
 	if err != nil {
+		return err
+	}
+	if err := migrateUserSubscriptionSortOrder(); err != nil {
+		return err
+	}
+	if err := migrateAffiliateRewardHistory(); err != nil {
 		return err
 	}
 	if err := InitializeUserAuthVersions(); err != nil {

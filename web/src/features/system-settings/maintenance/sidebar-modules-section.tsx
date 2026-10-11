@@ -128,6 +128,12 @@ export function SidebarModulesSection({
         title: t('Wallet'),
         description: t('Top up balance and view billing history.'),
       },
+      billing: {
+        title: t('Billing Records'),
+        description: t(
+          'View your topup transaction records and payment history'
+        ),
+      },
       personal: {
         title: t('Profile'),
         description: t('Personal settings and profile management.'),
@@ -135,6 +141,10 @@ export function SidebarModulesSection({
       security: {
         title: t('Security & Access'),
         description: t('Manage your security settings and account access'),
+      },
+      affiliate: {
+        title: t('Invitation Rewards'),
+        description: t('Manage invitation rewards and referral earnings.'),
       },
     },
     admin: {
@@ -161,6 +171,10 @@ export function SidebarModulesSection({
       subscription: {
         title: t('Subscription Management'),
         description: t('Manage subscription plans and pricing.'),
+      },
+      accounting: {
+        title: t('Accounting'),
+        description: t('Record and review financial entries.'),
       },
     },
   }

@@ -142,6 +142,21 @@ export function getAnnouncementColorClass(type?: string): string {
 }
 
 /**
+ * Get the semantic text color for an announcement status.
+ */
+export function getAnnouncementTextColorClass(type?: string): string {
+  const colorClasses: Record<AnnouncementType, string> = {
+    default: 'text-muted-foreground',
+    ongoing: 'text-info',
+    success: 'text-success',
+    warning: 'text-warning',
+    error: 'text-destructive',
+  }
+  const validType = (type || 'default') as AnnouncementType
+  return colorClasses[validType] || colorClasses.default
+}
+
+/**
  * Semantic colors for tags and badges
  */
 const TAG_COLORS = [

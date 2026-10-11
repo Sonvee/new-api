@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { Activity, BarChart3, WalletCards } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { IdentityBadge } from '@/components/identity-badge'
 import { StatusBadge } from '@/components/status-badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
@@ -152,10 +153,10 @@ export function ProfileHeader({ profile, loading }: ProfileHeaderProps) {
                   <span className='truncate'>{profile.email}</span>
                 </>
               )}
-              {profile.group && (
+              {profile.group?.trim() && (
                 <>
                   <span>•</span>
-                  <span className='truncate'>{profile.group}</span>
+                  <IdentityBadge identity={profile.group} className='max-w-full' />
                 </>
               )}
             </div>

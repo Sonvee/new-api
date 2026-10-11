@@ -41,6 +41,7 @@ const active: UserSubscriptionRecord[] = [
       end_time: 1,
       amount_total: 100,
       amount_used: 100,
+      sort_order: 0,
     },
   },
 ]

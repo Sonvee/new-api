@@ -10,7 +10,6 @@ import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/relaykit/dto"
-	"github.com/QuantumNous/new-api/setting/operation_setting"
 
 	"github.com/bytedance/gopkg/util/gopool"
 	"gorm.io/gorm"
@@ -102,7 +101,11 @@ type User struct {
 	AffCount             int                        `json:"aff_count" gorm:"type:int;default:0;column:aff_count"`
 	AffQuota             int                        `json:"aff_quota" gorm:"type:int;default:0;column:aff_quota"`           // 邀请剩余额度
 	AffHistoryQuota      int                        `json:"aff_history_quota" gorm:"type:int;default:0;column:aff_history"` // 邀请历史额度
+	AffRewardQuota       int                        `json:"aff_reward_quota" gorm:"type:int;default:0;column:aff_reward_quota"`
+	AffCommissionQuota   int                        `json:"aff_commission_quota" gorm:"type:int;default:0;column:aff_commission_quota"`
+	AffValidCount        int                        `json:"aff_valid_count" gorm:"type:int;default:0;column:aff_valid_count"`
 	InviterId            int                        `json:"inviter_id" gorm:"type:int;column:inviter_id;index"`
+	AffiliateActivated   bool                       `json:"affiliate_activated" gorm:"default:false;column:affiliate_activated"`
 	DeletedAt            gorm.DeletedAt             `gorm:"index"`
 	LinuxDOId            string                     `json:"linux_do_id" gorm:"column:linux_do_id;index"`
 	Setting              string                     `json:"setting" gorm:"type:text;column:setting"`
@@ -532,7 +535,7 @@ func GetSelfUserById(id int) (*User, error) {
 		"id", "username", "display_name", "role", "status", "email",
 		"github_id", "discord_id", "oidc_id", "wechat_id", "telegram_id",
 		"group", "quota", "used_quota", "request_count", "aff_code", "aff_count",
-		"aff_quota", "aff_history", "inviter_id", "linux_do_id", "setting",
+		"aff_quota", "aff_history", "aff_reward_quota", "aff_commission_quota", "aff_valid_count", "inviter_id", "affiliate_activated", "linux_do_id", "setting",
 		"stripe_customer", "auth_version",
 		"CASE WHEN password <> '' THEN 1 ELSE 0 END AS has_password",
 	}).First(&profile, "id = ?", id).Error
@@ -570,11 +573,7 @@ func HardDeleteUserById(id int) (int64, error) {
 }
 
 func inviteUser(inviterId int) error {
-	result := DB.Model(&User{}).Where("id = ?", inviterId).Updates(map[string]any{
-		"aff_count":   gorm.Expr("aff_count + ?", 1),
-		"aff_quota":   gorm.Expr("aff_quota + ?", common.QuotaForInviter),
-		"aff_history": gorm.Expr("aff_history + ?", common.QuotaForInviter),
-	})
+	result := DB.Model(&User{}).Where("id = ?", inviterId).Update("aff_count", gorm.Expr("aff_count + ?", 1))
 	if result.Error != nil {
 		return result.Error
 	}
@@ -620,7 +619,6 @@ func (user *User) TransferAffQuotaToQuota(quota int) error {
 	// 提交事务
 	return tx.Commit().Error
 }
-
 func (user *User) prepareForInsert(tx *gorm.DB) error {
 	user.Email = NormalizeEmail(user.Email)
 	if err := ensureEmailAvailableWithTx(tx, user.Email, 0); err != nil {
@@ -688,7 +686,17 @@ func (user *User) Insert(inviterId int) error {
 				user.SetSetting(defaultSetting)
 			}
 
-			return tx.Create(user).Error
+			if err := tx.Create(user).Error; err != nil {
+				return err
+			}
+			if user.Quota > 0 {
+				return recordWalletLedgerTx(tx, user.Id, user.Quota, 0, user.Quota, WalletLedgerMeta{
+					Type:       WalletLedgerTypeSystemGrant,
+					SourceType: "user_registration",
+					SourceId:   strconv.Itoa(user.Id),
+				})
+			}
+			return nil
 		})
 	}); err != nil {
 		return err
@@ -717,15 +725,12 @@ func (user *User) finishInsert(inviterId int) {
 	if common.QuotaForNewUser > 0 {
 		RecordLog(user.Id, LogTypeSystem, common.NewMessage("New user sign-up bonus {{quota}}", map[string]any{"quota": logger.FormatQuota(common.QuotaForNewUser)}))
 	}
-	if inviterId != 0 && operation_setting.IsPaymentComplianceConfirmed() {
-		if common.QuotaForInvitee > 0 {
-			_ = IncreaseUserQuota(user.Id, common.QuotaForInvitee, true)
-			RecordLog(user.Id, LogTypeSystem, common.NewMessage("Invitation code bonus {{quota}}", map[string]any{"quota": logger.FormatQuota(common.QuotaForInvitee)}))
+	if inviterId != 0 {
+		if err := inviteUser(inviterId); err != nil {
+			common.SysError(fmt.Sprintf("记录邀请关系失败 inviter_id=%d invitee_id=%d: %s", inviterId, user.Id, err.Error()))
 		}
-		if common.QuotaForInviter > 0 {
-			//_ = IncreaseUserQuota(inviterId, common.QuotaForInviter)
-			RecordLog(inviterId, LogTypeSystem, common.NewMessage("Bonus for inviting a user {{quota}}", map[string]any{"quota": logger.FormatQuota(common.QuotaForInviter)}))
-			_ = inviteUser(inviterId)
+		if err := ProcessAffiliateQuotaCredit(user.Id, user.Quota); err != nil {
+			common.SysError(fmt.Sprintf("处理邀请激活失败 inviter_id=%d invitee_id=%d: %s", inviterId, user.Id, err.Error()))
 		}
 	}
 }
@@ -751,7 +756,17 @@ func (user *User) InsertWithTx(tx *gorm.DB, inviterId int) error {
 			user.SetSetting(defaultSetting)
 		}
 
-		return tx.Create(user).Error
+		if err := tx.Create(user).Error; err != nil {
+			return err
+		}
+		if user.Quota > 0 {
+			return recordWalletLedgerTx(tx, user.Id, user.Quota, 0, user.Quota, WalletLedgerMeta{
+				Type:       WalletLedgerTypeSystemGrant,
+				SourceType: "user_registration",
+				SourceId:   strconv.Itoa(user.Id),
+			})
+		}
+		return nil
 	})
 }
 
@@ -774,14 +789,12 @@ func (user *User) FinalizeOAuthUserCreation(inviterId int) {
 	if common.QuotaForNewUser > 0 {
 		RecordLog(user.Id, LogTypeSystem, common.NewMessage("New user sign-up bonus {{quota}}", map[string]any{"quota": logger.FormatQuota(common.QuotaForNewUser)}))
 	}
-	if inviterId != 0 && operation_setting.IsPaymentComplianceConfirmed() {
-		if common.QuotaForInvitee > 0 {
-			_ = IncreaseUserQuota(user.Id, common.QuotaForInvitee, true)
-			RecordLog(user.Id, LogTypeSystem, common.NewMessage("Invitation code bonus {{quota}}", map[string]any{"quota": logger.FormatQuota(common.QuotaForInvitee)}))
+	if inviterId != 0 {
+		if err := inviteUser(inviterId); err != nil {
+			common.SysError(fmt.Sprintf("记录邀请关系失败 inviter_id=%d invitee_id=%d: %s", inviterId, user.Id, err.Error()))
 		}
-		if common.QuotaForInviter > 0 {
-			RecordLog(inviterId, LogTypeSystem, common.NewMessage("Bonus for inviting a user {{quota}}", map[string]any{"quota": logger.FormatQuota(common.QuotaForInviter)}))
-			_ = inviteUser(inviterId)
+		if err := ProcessAffiliateQuotaCredit(user.Id, user.Quota); err != nil {
+			common.SysError(fmt.Sprintf("处理邀请激活失败 inviter_id=%d invitee_id=%d: %s", inviterId, user.Id, err.Error()))
 		}
 	}
 }
@@ -1354,6 +1367,9 @@ func IncreaseUserQuota(id int, quota int, db bool) (err error) {
 		return nil
 	}
 	if err := increaseUserQuota(id, quota); err != nil {
+		return err
+	}
+	if err := ProcessAffiliateQuotaCredit(id, quota); err != nil {
 		return err
 	}
 	gopool.Go(func() {

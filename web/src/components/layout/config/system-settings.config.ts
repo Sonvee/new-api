@@ -65,7 +65,13 @@ function getSystemSettingsNavGroups(t: TFunction): NavGroup[] {
         {
           title: t('Billing & Payment'),
           icon: CreditCard,
-          items: getBillingSectionNavItems(t),
+          items: [
+            ...getBillingSectionNavItems(t),
+            {
+              title: t('Invitation Rewards'),
+              url: '/system-settings/billing/affiliate-rewards',
+            },
+          ],
         },
         {
           title: t('Models'),

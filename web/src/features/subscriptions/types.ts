@@ -67,12 +67,19 @@ export const userSubscriptionSchema = z.object({
   amount_total: z.number(),
   amount_used: z.number(),
   next_reset_time: z.number().optional(),
+  sort_order: z.number(),
 })
 
 export type UserSubscription = z.infer<typeof userSubscriptionSchema>
 
 export interface UserSubscriptionRecord {
   subscription: UserSubscription
+}
+
+export type SubscriptionMoveDirection = 'up' | 'down'
+
+export interface CleanupSubscriptionsResponse {
+  deleted_count: number
 }
 
 // ============================================================================

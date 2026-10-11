@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import type { TFunction } from 'i18next'
-import { Bell, Megaphone } from 'lucide-react'
+import { Bell, Megaphone, Pin } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { RichContent } from '@/components/rich-content'
@@ -50,6 +50,7 @@ interface AnnouncementItem {
   content?: string
   extra?: string
   publishDate?: string | Date
+  pinned?: boolean
 }
 
 interface NotificationPopoverProps {
@@ -270,9 +271,20 @@ function AnnouncementsContent({
                     ) : null}
 
                     {absoluteTime ? (
-                      <div className='text-muted-foreground text-xs'>
-                        {relativeTime ? `${relativeTime} • ` : null}
-                        {absoluteTime}
+                      <div className='text-muted-foreground flex min-w-0 items-center justify-between gap-2 text-xs leading-4'>
+                        <span className='truncate'>
+                          {relativeTime ? `${relativeTime} • ` : null}
+                          {absoluteTime}
+                        </span>
+                        {item.pinned ? (
+                          <span
+                            className='text-primary inline-flex shrink-0 items-center'
+                            aria-label={t('Pinned')}
+                            title={t('Pinned')}
+                          >
+                            <Pin aria-hidden='true' className='size-3.5' />
+                          </span>
+                        ) : null}
                       </div>
                     ) : null}
                   </div>

@@ -1,6 +1,8 @@
 package model
 
 import (
+	"errors"
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -80,17 +82,10 @@ func UserCheckin(userId int) (*Checkin, error) {
 		CreatedAt:    time.Now().Unix(),
 	}
 
-	// 根据数据库类型选择不同的策略
-	if common.UsingMainDatabase(common.DatabaseTypeSQLite) {
-		// SQLite 不支持嵌套事务，使用顺序操作 + 手动回滚
-		return userCheckinWithoutTransaction(checkin, userId, quotaAwarded)
-	}
-
-	// MySQL 和 PostgreSQL 支持事务，使用事务保证原子性
 	return userCheckinWithTransaction(checkin, userId, quotaAwarded)
 }
 
-// userCheckinWithTransaction 使用事务执行签到（适用于 MySQL 和 PostgreSQL）
+// userCheckinWithTransaction 使用事务执行签到
 func userCheckinWithTransaction(checkin *Checkin, userId int, quotaAwarded int) (*Checkin, error) {
 	err := DB.Transaction(func(tx *gorm.DB) error {
 		// 步骤1: 创建签到记录
@@ -99,10 +94,23 @@ func userCheckinWithTransaction(checkin *Checkin, userId int, quotaAwarded int) 
 			return common.NewMessage("Check-in failed, please try again later")
 		}
 
-		// 步骤2: 在事务中增加用户额度
+		var user User
+		if err := lockForUpdate(tx).Select("id", "quota").First(&user, userId).Error; err != nil {
+			return errors.New("签到失败：获取用户额度出错")
+		}
+		if user.Quota > common.MaxWalletQuota-quotaAwarded {
+			return ErrWalletQuotaLimitExceeded
+		}
 		if err := tx.Model(&User{}).Where("id = ?", userId).
 			Update("quota", gorm.Expr("quota + ?", quotaAwarded)).Error; err != nil {
 			return common.NewMessage("Check-in failed: quota update error")
+		}
+		if err := recordWalletLedgerTx(tx, userId, quotaAwarded, user.Quota, user.Quota+quotaAwarded, WalletLedgerMeta{
+			Type:       WalletLedgerTypeCheckin,
+			SourceType: "checkin",
+			SourceId:   fmt.Sprintf("%d", checkin.Id),
+		}); err != nil {
+			return err
 		}
 
 		return nil

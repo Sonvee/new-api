@@ -405,7 +405,7 @@ function renderPagination<TData>(
   return props.paginationInFooter !== false ? (
     <PageFooterPortal>{pagination}</PageFooterPortal>
   ) : (
-    <div className='pt-2'>{pagination}</div>
+    <div className='pt-4'>{pagination}</div>
   )
 }
 

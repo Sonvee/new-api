@@ -122,6 +122,13 @@ export function SidebarModulesCard() {
           description: t('Balance and top-up management'),
         },
         {
+          key: 'billing',
+          title: t('Billing Records'),
+          description: t(
+            'View your topup transaction records and payment history'
+          ),
+        },
+        {
           key: 'personal',
           title: t('Personal Settings'),
           description: t('Personal info settings'),

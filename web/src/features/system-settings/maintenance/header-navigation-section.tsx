@@ -20,7 +20,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import * as z from 'zod'
 
 import {
   Form,
@@ -47,19 +46,11 @@ import {
   type HeaderNavModulesConfig,
   serializeHeaderNavModules,
 } from './config'
-
-const headerNavSchema = z.object({
-  home: z.boolean(),
-  console: z.boolean(),
-  pricingEnabled: z.boolean(),
-  pricingRequireAuth: z.boolean(),
-  rankingsEnabled: z.boolean(),
-  rankingsRequireAuth: z.boolean(),
-  docs: z.boolean(),
-  about: z.boolean(),
-})
-
-type HeaderNavFormValues = z.infer<typeof headerNavSchema>
+import { CustomNavigationMenu } from './custom-navigation-menu'
+import {
+  headerNavSchema,
+  type HeaderNavFormValues,
+} from './header-navigation-schema'
 
 type HeaderNavigationSectionProps = {
   config: HeaderNavModulesConfig
@@ -95,46 +86,47 @@ const toFormValues = (config: HeaderNavModulesConfig): HeaderNavFormValues => ({
     config.about === undefined
       ? HEADER_NAV_DEFAULT.about
       : Boolean(config.about),
+  customLinks: config.customLinks.map((item) => ({ ...item })),
 })
 
-export function HeaderNavigationSection({
-  config,
-  initialSerialized,
-}: HeaderNavigationSectionProps) {
+export function HeaderNavigationSection(props: HeaderNavigationSectionProps) {
   const { t } = useTranslation()
   const updateOption = useUpdateOption()
-  const formDefaults = useMemo(() => toFormValues(config), [config])
+  const formDefaults = useMemo(() => toFormValues(props.config), [props.config])
 
   const form = useForm<HeaderNavFormValues>({
     resolver: zodResolver(headerNavSchema),
     defaultValues: formDefaults,
   })
-
   useEffect(() => {
     form.reset(formDefaults)
   }, [formDefaults, form])
 
   const onSubmit = async (values: HeaderNavFormValues) => {
     const payload: HeaderNavModulesConfig = {
-      ...config,
+      ...props.config,
       home: values.home,
       console: values.console,
       docs: values.docs,
       about: values.about,
       pricing: {
-        ...(config.pricing ?? HEADER_NAV_DEFAULT.pricing),
+        ...(props.config.pricing ?? HEADER_NAV_DEFAULT.pricing),
         enabled: values.pricingEnabled,
         requireAuth: values.pricingRequireAuth,
       },
       rankings: {
-        ...(config.rankings ?? HEADER_NAV_DEFAULT.rankings),
+        ...(props.config.rankings ?? HEADER_NAV_DEFAULT.rankings),
         enabled: values.rankingsEnabled,
         requireAuth: values.rankingsRequireAuth,
       },
+      customLinks: values.customLinks.map((item) => ({
+        name: item.name.trim(),
+        url: item.url.trim(),
+      })),
     }
 
     const serialized = serializeHeaderNavModules(payload)
-    if (serialized === initialSerialized) {
+    if (serialized === props.initialSerialized) {
       return
     }
 
@@ -233,7 +225,7 @@ export function HeaderNavigationSection({
                     </SettingsSwitchContent>
                     <FormControl>
                       <Switch
-                        checked={field.value}
+                        checked={field.value as boolean}
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
@@ -258,7 +250,7 @@ export function HeaderNavigationSection({
                       </SettingsSwitchContent>
                       <FormControl>
                         <Switch
-                          checked={field.value}
+                          checked={field.value as boolean}
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
@@ -281,7 +273,7 @@ export function HeaderNavigationSection({
                         </SettingsSwitchContent>
                         <FormControl>
                           <Switch
-                            checked={field.value}
+                            checked={field.value as boolean}
                             onCheckedChange={field.onChange}
                             disabled={!form.watch(module.requireAuthDependsOn)}
                           />
@@ -294,6 +286,8 @@ export function HeaderNavigationSection({
               </SettingsControlGroup>
             ))}
           </div>
+
+          <CustomNavigationMenu form={form} />
         </SettingsForm>
       </Form>
     </SettingsSection>

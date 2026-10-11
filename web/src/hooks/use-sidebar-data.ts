@@ -18,17 +18,20 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import {
   Activity,
+  BookOpen,
   Box,
   ClipboardList,
   CreditCard,
   FileText,
   FlaskConical,
+  Gift,
   Key,
   LayoutDashboard,
   ListTodo,
   MessageSquare,
   PlugZap,
   Radio,
+  Receipt,
   ServerCog,
   Settings,
   ShieldCheck,
@@ -117,6 +120,16 @@ export function useSidebarData(): SidebarData {
             icon: Wallet,
           },
           {
+            title: t('Billing Records'),
+            url: '/billing-records',
+            icon: Receipt,
+          },
+          {
+            title: t('Invitation Rewards'),
+            url: '/affiliate-rewards',
+            icon: Gift,
+          },
+          {
             title: t('Profile'),
             url: '/profile',
             icon: User,
@@ -156,6 +169,11 @@ export function useSidebarData(): SidebarData {
             title: t('Subscriptions'),
             url: '/subscriptions',
             icon: CreditCard,
+          },
+          {
+            title: t('Accounting'),
+            url: '/accounting',
+            icon: BookOpen,
           },
           {
             title: t('System Info'),

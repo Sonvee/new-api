@@ -16,6 +16,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import {
+  parseCustomHeaderNavItems,
+  type CustomHeaderNavItem,
+} from '@/lib/header-navigation-links'
+
 export type HeaderNavAccessConfig = {
   enabled: boolean
   requireAuth: boolean
@@ -28,7 +33,8 @@ export type HeaderNavModulesConfig = {
   rankings: HeaderNavAccessConfig
   docs: boolean
   about: boolean
-  [key: string]: boolean | HeaderNavAccessConfig
+  customLinks: CustomHeaderNavItem[]
+  [key: string]: boolean | HeaderNavAccessConfig | CustomHeaderNavItem[]
 }
 
 export type SidebarSectionConfig = {
@@ -51,6 +57,7 @@ export const HEADER_NAV_DEFAULT: HeaderNavModulesConfig = {
   },
   docs: true,
   about: true,
+  customLinks: [],
 }
 
 export const SIDEBAR_MODULES_DEFAULT: SidebarModulesAdminConfig = {
@@ -71,8 +78,10 @@ export const SIDEBAR_MODULES_DEFAULT: SidebarModulesAdminConfig = {
   personal: {
     enabled: true,
     topup: true,
+    billing: true,
     personal: true,
     security: true,
+    affiliate: true,
   },
   admin: {
     enabled: true,
@@ -82,6 +91,7 @@ export const SIDEBAR_MODULES_DEFAULT: SidebarModulesAdminConfig = {
     user: true,
     setting: true,
     subscription: true,
+    accounting: true,
   },
 }
 
@@ -100,6 +110,7 @@ const cloneHeaderNavDefault = (): HeaderNavModulesConfig => ({
   ...HEADER_NAV_DEFAULT,
   pricing: { ...HEADER_NAV_DEFAULT.pricing },
   rankings: { ...HEADER_NAV_DEFAULT.rankings },
+  customLinks: [...HEADER_NAV_DEFAULT.customLinks],
 })
 
 const parseAccessModule = (
@@ -151,6 +162,10 @@ export function parseHeaderNavModules(
     }
 
     Object.entries(parsed).forEach(([key, raw]) => {
+      if (key === 'customLinks') {
+        result.customLinks = parseCustomHeaderNavItems(raw)
+        return
+      }
       if (key === 'pricing') {
         result.pricing = parseAccessModule(raw, base.pricing)
         return

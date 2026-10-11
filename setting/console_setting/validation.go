@@ -1,6 +1,7 @@
 package console_setting
 
 import (
+	"fmt"
 	"net/url"
 	"regexp"
 	"sort"
@@ -198,6 +199,11 @@ func validateAnnouncements(announcementsStr string) error {
 				}
 			}
 		}
+		if pinned, exists := ann["pinned"]; exists {
+			if _, ok := pinned.(bool); !ok {
+				return fmt.Errorf("第%d个公告的置顶字段值不合法", i+1)
+			}
+		}
 		if exceedsMaxCharacters(content, 500) {
 			return common.NewMessage("Announcement #{{index}} content cannot exceed 500 characters", map[string]any{"index": i + 1})
 		}
@@ -248,11 +254,20 @@ func getPublishTime(item map[string]any) time.Time {
 	return time.Time{}
 }
 
-func GetAnnouncements() []map[string]any {
-	list := getJSONList(GetConsoleSetting().Announcements)
+func sortAnnouncements(list []map[string]any) {
 	sort.SliceStable(list, func(i, j int) bool {
+		iPinned, _ := list[i]["pinned"].(bool)
+		jPinned, _ := list[j]["pinned"].(bool)
+		if iPinned != jPinned {
+			return iPinned
+		}
 		return getPublishTime(list[i]).After(getPublishTime(list[j]))
 	})
+}
+
+func GetAnnouncements() []map[string]any {
+	list := getJSONList(GetConsoleSetting().Announcements)
+	sortAnnouncements(list)
 	return list
 }
 

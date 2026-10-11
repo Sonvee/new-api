@@ -1,6 +1,7 @@
 package model
 
 import (
+	"strconv"
 	"sync"
 	"testing"
 
@@ -140,6 +141,12 @@ func TestRedeemCreditsQuotaExactlyOnce(t *testing.T) {
 	require.NoError(t, DB.First(&redemption, "name = ?", "redeem-test").Error)
 	assert.Equal(t, common.RedemptionCodeStatusUsed, redemption.Status)
 	assert.Equal(t, userId, redemption.UsedUserId)
+
+	var ledger WalletLedger
+	require.NoError(t, DB.Where("user_id = ? AND source_id = ?", userId, strconv.Itoa(redemption.Id)).First(&ledger).Error)
+	assert.Equal(t, WalletLedgerTypeRedemption, ledger.Type)
+	assert.Equal(t, 0, ledger.BalanceBefore)
+	assert.Equal(t, 500, ledger.BalanceAfter)
 
 	// Redeeming the same code again must fail and must not credit quota.
 	_, err = Redeem(key, userId)

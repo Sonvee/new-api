@@ -688,6 +688,81 @@ For commercial licensing, please contact support@quantumnous.com
   }
 }
 
+/* ── Profile identity badges ── */
+@property --identity-premium-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes identity-badge-premium-border {
+  to {
+    --identity-premium-angle: 360deg;
+  }
+}
+
+@keyframes identity-badge-premium-text {
+  to {
+    background-position: 200% center;
+  }
+}
+
+.identity-badge-premium {
+  isolation: isolate;
+  border-color: transparent !important;
+  background:
+    linear-gradient(145deg, rgba(24, 24, 27, 0.98), rgba(3, 7, 18, 0.98) 55%, rgba(24, 24, 27, 0.98)) padding-box,
+    conic-gradient(
+      from var(--identity-premium-angle),
+      #fff7d6,
+      #fde68a,
+      #f8fafc,
+      #c4b5fd,
+      #f9a8d4,
+      #fef3c7,
+      #fff7d6
+    ) border-box;
+  box-shadow:
+    0 0 8px rgba(250, 204, 21, 0.32),
+    0 0 14px rgba(192, 132, 252, 0.2),
+    0 0 18px rgba(244, 114, 182, 0.16);
+  animation: identity-badge-premium-border 4s linear infinite;
+}
+
+.identity-badge-premium__label {
+  color: #fef3c7;
+  background: linear-gradient(
+    100deg,
+    #fef3c7 0%,
+    #f8fafc 22%,
+    #f9a8d4 42%,
+    #c4b5fd 62%,
+    #fde68a 82%,
+    #fef3c7 100%
+  );
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 5px rgba(248, 250, 252, 0.55));
+  animation: identity-badge-premium-text 3.2s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .identity-badge-premium,
+  .identity-badge-premium__label {
+    animation: none;
+  }
+
+  .identity-badge-premium {
+    --identity-premium-angle: 45deg;
+  }
+
+  .identity-badge-premium__label {
+    background-position: 50% center;
+  }
+}
+
 /* ── Auto group flowing border ── */
 @property --auto-group-flow-angle {
   syntax: '<angle>';
