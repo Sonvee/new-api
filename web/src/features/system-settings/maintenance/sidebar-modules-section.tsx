@@ -146,6 +146,10 @@ export function SidebarModulesSection({
         title: t('Invitation Rewards'),
         description: t('Manage invitation rewards and referral earnings.'),
       },
+      welfare: {
+        title: t('Welfare Activities'),
+        description: t('Discover welfare activities and special offers.'),
+      },
     },
     admin: {
       channel: {

@@ -87,6 +87,7 @@ describe('security sidebar visibility', () => {
       'Wallet',
       'Billing Records',
       'Invitation Rewards',
+      'Welfare Activities',
       'Profile',
       'Security & Access',
     ])
@@ -140,6 +141,7 @@ describe('affiliate rewards sidebar entry', () => {
       'Wallet',
       'Billing Records',
       'Invitation Rewards',
+      'Welfare Activities',
       'Profile',
       'Security & Access',
     ])
@@ -183,6 +185,40 @@ describe('billing records sidebar entry', () => {
         .some((item) => item.title === 'Billing Records')
     ).toBe(false)
   })
+})
+
+describe('welfare activities sidebar entry', () => {
+  it('legacy configurations show Welfare Activities below Invitation Rewards', () => {
+    const { result } = sidebarFor(
+      { personal: { enabled: true, affiliate: true } },
+      { personal: { enabled: true, affiliate: true } }
+    )
+    const items = result.current.find((group) => group.id === 'personal')?.items
+    const invitationIndex =
+      items?.findIndex((item) => item.title === 'Invitation Rewards') ?? -1
+
+    expect(items?.[invitationIndex + 1]).toMatchObject({
+      title: 'Welfare Activities',
+      url: '/welfare-activities',
+    })
+  })
+
+  it.each([
+    [{ personal: { enabled: true, welfare: false } }, undefined],
+    [{ personal: { enabled: false } }, { personal: { welfare: true } }],
+    [undefined, { personal: { enabled: true, welfare: false } }],
+    [undefined, { personal: { enabled: false } }],
+  ])(
+    'admin or user disablement hides Welfare Activities (%j, %j)',
+    (admin, user) => {
+      const { result } = sidebarFor(admin, user)
+      expect(
+        result.current
+          .flatMap((group) => group.items)
+          .some((item) => item.title === 'Welfare Activities')
+      ).toBe(false)
+    }
+  )
 })
 
 describe('audit log sidebar entry', () => {

@@ -399,6 +399,10 @@ func migrateDB() error {
 		&TwoFA{},
 		&TwoFABackupCode{},
 		&Checkin{},
+		&WelfareActivityIssue{},
+		&WelfareActivityIssueCounter{},
+		&WelfareActivityRedPacket{},
+		&WelfareActivityClaim{},
 		&SubscriptionOrder{},
 		&UserSubscription{},
 		&SubscriptionPreConsumeRecord{},
@@ -413,6 +417,9 @@ func migrateDB() error {
 		&UserAccessToken{},
 	)
 	if err != nil {
+		return err
+	}
+	if err := InitializeWelfareActivityIssueCounter(); err != nil {
 		return err
 	}
 	if err := migrateUserSubscriptionSortOrder(); err != nil {

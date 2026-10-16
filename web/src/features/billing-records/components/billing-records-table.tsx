@@ -25,9 +25,12 @@ import { CopyButton } from '@/components/copy-button'
 import { DataTablePage, useDataTable } from '@/components/data-table'
 import { ErrorState } from '@/components/error-state'
 import { StatusBadge, type StatusBadgeProps } from '@/components/status-badge'
+import { toIntlLocale } from '@/i18n/languages'
 import { formatLocalCurrencyAmount } from '@/lib/currency'
 import { formatQuota, formatTimestampToDate } from '@/lib/format'
 import { requireServerSuccess } from '@/lib/server-error-message'
+
+import { formatWelfareQuota } from '@/features/welfare-activities/lib/format'
 
 import { getBillingConsumptions, getWalletLedgers } from '../api'
 import type { BillingConsumptionRecord, BillingRecordQuery, WalletLedgerRecord } from '../types'
@@ -52,6 +55,7 @@ const LEDGER_TYPES = [
   { value: 'invitation_reward', label: 'Invitation reward' },
   { value: 'commission', label: 'Commission rebate' },
   { value: 'checkin', label: 'Check-in reward' },
+  { value: 'welfare_activity', label: 'Welfare Activities' },
   { value: 'system_grant', label: 'System grant' },
 ]
 
@@ -78,6 +82,7 @@ function getTypeLabel(type: string, t: (key: string) => string) {
     invitation_reward: 'Invitation reward',
     commission: 'Commission rebate',
     checkin: 'Check-in reward',
+    welfare_activity: 'Welfare Activities',
     system_grant: 'System grant',
   }
   return t(labels[type] ?? type)
@@ -107,8 +112,18 @@ function getStatusLabel(status: string, t: (key: string) => string) {
   return t(labels[status] ?? 'Unknown')
 }
 
+// 福利奖励可能只有一个内部单位，不能沿用普通流水的小数截断精度。
+function formatLedgerQuota(record: WalletLedgerRecord, value: number, locale: string): string {
+  if (record.type === 'welfare_activity') {
+    return formatWelfareQuota(value, locale)
+  }
+  return formatQuota(value)
+}
+
 export function BillingRecordsTable(props: BillingRecordsTableProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale =
+    toIntlLocale(i18n.resolvedLanguage || i18n.language) ?? 'en-US'
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [globalFilter, setGlobalFilter] = useState('')
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
@@ -216,12 +231,13 @@ export function BillingRecordsTable(props: BillingRecordsTableProps) {
         accessorKey: 'delta_quota',
         header: t('Balance change'),
         cell: ({ row }) => {
-          const value = Number((row.original as WalletLedgerRecord).delta_quota)
-          return <span className={value >= 0 ? 'font-medium text-success' : 'font-medium text-destructive'}>{value >= 0 ? '+' : '-'}{formatQuota(Math.abs(value))}</span>
+          const record = row.original as WalletLedgerRecord
+          const value = Number(record.delta_quota)
+          return <span className={value >= 0 ? 'font-medium text-success' : 'font-medium text-destructive'}>{value >= 0 ? '+' : '-'}{formatLedgerQuota(record, Math.abs(value), locale)}</span>
         },
       },
-      { accessorKey: 'balance_before', header: t('Balance before'), cell: ({ row }) => formatQuota(Number((row.original as WalletLedgerRecord).balance_before)) },
-      { accessorKey: 'balance_after', header: t('Balance after'), cell: ({ row }) => formatQuota(Number((row.original as WalletLedgerRecord).balance_after)) },
+      { accessorKey: 'balance_before', header: t('Balance before'), cell: ({ row }) => formatLedgerQuota(row.original as WalletLedgerRecord, Number((row.original as WalletLedgerRecord).balance_before), locale) },
+      { accessorKey: 'balance_after', header: t('Balance after'), cell: ({ row }) => formatLedgerQuota(row.original as WalletLedgerRecord, Number((row.original as WalletLedgerRecord).balance_after), locale) },
       { accessorKey: 'created_at', header: t('Created at'), cell: ({ row }) => formatTimestampToDate((row.original as WalletLedgerRecord).created_at) },
       {
         id: 'direction',
@@ -230,7 +246,7 @@ export function BillingRecordsTable(props: BillingRecordsTableProps) {
         enableHiding: false,
       },
     ]
-  }, [props.kind, t])
+  }, [props.kind, t, locale])
 
   const { table } = useDataTable({
     data: items,

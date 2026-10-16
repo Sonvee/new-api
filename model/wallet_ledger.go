@@ -18,6 +18,7 @@ const (
 	WalletLedgerTypeCommission       = "commission"
 	WalletLedgerTypeCheckin          = "checkin"
 	WalletLedgerTypeSystemGrant      = "system_grant"
+	WalletLedgerTypeWelfareActivity  = "welfare_activity"
 )
 
 type WalletLedger struct {

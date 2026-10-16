@@ -21,6 +21,7 @@ func RegisterScheduledSystemTasks() {
 	service.RegisterSystemTaskHandler(modelUpdateHandler{})
 	service.RegisterSystemTaskHandler(midjourneyPollHandler{})
 	service.RegisterSystemTaskHandler(asyncTaskPollHandler{})
+	service.RegisterSystemTaskHandler(welfareActivityHandler{})
 }
 
 // channelTestHandler runs the scheduled "test all channels" job. Enablement and
@@ -159,4 +160,24 @@ func finishSystemTaskHandler(task *model.SystemTask, runnerID string, status mod
 	if err := model.FinishSystemTask(task.TaskID, runnerID, status, result, errorMessage); err != nil {
 		common.SysLog(common.LogText("system task %s failed to persist result: %v", task.TaskID, err))
 	}
+}
+
+// welfareActivityHandler 推进到点红包，数据库状态条件使重复调度保持幂等。
+type welfareActivityHandler struct{}
+
+func (welfareActivityHandler) Type() string            { return model.SystemTaskTypeWelfareActivity }
+func (welfareActivityHandler) Enabled() bool           { return model.HasDueWelfareActivity() }
+func (welfareActivityHandler) Interval() time.Duration { return 15 * time.Second }
+func (welfareActivityHandler) NewPayload() any         { return nil }
+func (welfareActivityHandler) Run(ctx context.Context, task *model.SystemTask, runnerID string) {
+	if ctx.Err() != nil {
+		finishSystemTaskHandler(task, runnerID, model.SystemTaskStatusFailed, nil, ctx.Err())
+		return
+	}
+	issue, err := model.ActivateDueWelfareActivity(ctx)
+	if err != nil {
+		finishSystemTaskHandler(task, runnerID, model.SystemTaskStatusFailed, nil, err)
+		return
+	}
+	finishSystemTaskHandler(task, runnerID, model.SystemTaskStatusSucceeded, model.WelfareActivityIssueToSummary(issue), nil)
 }

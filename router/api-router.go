@@ -316,6 +316,24 @@ func SetApiRouter(router *gin.Engine) {
 			}
 		}
 
+		welfareRoute := apiRouter.Group("/welfare-activities", middleware.UserAuth(), middleware.DisableCache())
+		{
+			welfareRoute.GET("/current", controller.GetCurrentWelfareActivity)
+			welfareRoute.GET("/issues", controller.ListWelfareActivityIssues)
+			welfareRoute.GET("/issues/:issue_no/claims", controller.ListWelfareActivityClaims)
+			welfareRoute.POST("/current/claim", middleware.SessionCookieOriginGuard(), middleware.WelfareClaimRateLimit(), controller.ClaimCurrentWelfareActivity)
+		}
+		welfareAdminRoute := apiRouter.Group("/admin/welfare-activities", middleware.AdminAuth(), middleware.DisableCache())
+		{
+			welfareAdminRoute.GET("", controller.AdminListWelfareActivityIssues)
+			welfareAdminRoute.POST("/drafts", middleware.SessionCookieOriginGuard(), controller.AdminCreateWelfareActivityDraft)
+			welfareAdminRoute.PUT("/drafts/:id", middleware.SessionCookieOriginGuard(), controller.AdminUpdateWelfareActivityDraft)
+			welfareAdminRoute.DELETE("/drafts/:id", middleware.SessionCookieOriginGuard(), controller.AdminDeleteWelfareActivityDraft)
+			welfareAdminRoute.POST("/drafts/:id/dispatch", middleware.SessionCookieOriginGuard(), middleware.UserCriticalRateLimit("welfare-dispatch"), controller.AdminDispatchWelfareActivityDraft)
+			welfareAdminRoute.POST("/:id/cancel", middleware.SessionCookieOriginGuard(), controller.AdminCancelWelfareActivityIssue)
+			welfareAdminRoute.GET("/issues/:issue_no/claims", controller.AdminListWelfareActivityClaims)
+		}
+
 		accountingRoute := apiRouter.Group("/accounting")
 		accountingRoute.Use(middleware.AdminAuth())
 		{

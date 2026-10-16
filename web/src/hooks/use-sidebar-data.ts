@@ -35,6 +35,7 @@ import {
   ServerCog,
   Settings,
   ShieldCheck,
+  Sparkles,
   Ticket,
   User,
   Users,
@@ -128,6 +129,11 @@ export function useSidebarData(): SidebarData {
             title: t('Invitation Rewards'),
             url: '/affiliate-rewards',
             icon: Gift,
+          },
+          {
+            title: t('Welfare Activities'),
+            url: '/welfare-activities',
+            icon: Sparkles,
           },
           {
             title: t('Profile'),

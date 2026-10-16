@@ -58,6 +58,7 @@ const DEFAULT_SIDEBAR_MODULES: SidebarModulesAdminConfig = {
     personal: true,
     security: true,
     affiliate: true,
+    welfare: true,
   },
   admin: {
     enabled: true,
@@ -116,6 +117,7 @@ const URL_TO_CONFIG_MAP: Record<string, { section: string; module: string }> = {
   '/profile': { section: 'personal', module: 'personal' },
   '/security': { section: 'personal', module: 'security' },
   '/affiliate-rewards': { section: 'personal', module: 'affiliate' },
+  '/welfare-activities': { section: 'personal', module: 'welfare' },
   '/channels': { section: 'admin', module: 'channel' },
   '/models': { section: 'admin', module: 'models' },
   '/models/metadata': { section: 'admin', module: 'models' },

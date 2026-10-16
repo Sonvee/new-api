@@ -26,6 +26,7 @@ import {
 import { HeaderNavigationSection } from '../maintenance/header-navigation-section'
 import { NoticeSection } from '../maintenance/notice-section'
 import { SidebarModulesSection } from '../maintenance/sidebar-modules-section'
+import { WelfareActivitiesSection } from '../maintenance/welfare-activities-section'
 import type { SiteSettings } from '../types'
 import { createSectionRegistry } from '../utils/section-registry'
 
@@ -90,6 +91,11 @@ const SITE_SECTIONS = [
         />
       )
     },
+  },
+  {
+    id: 'welfare-activities',
+    titleKey: 'Welfare Activities',
+    build: () => <WelfareActivitiesSection />,
   },
 ] as const
 
