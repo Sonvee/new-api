@@ -77,6 +77,7 @@ import { DetailsDialog } from '../dialogs/details-dialog'
 import { LogCostDisplay } from '../log-cost-display'
 import { ModelBadge } from '../model-badge'
 import { TimingMetricsCell, StreamTpsCell } from '../timing-metrics-cell'
+import { TokenCacheHelp } from '../token-cache-help'
 import { TokenUsageCell } from '../token-usage-cell'
 import { useUsageLogsContext } from '../usage-logs-provider'
 
@@ -720,6 +721,7 @@ export function useCommonLogsColumns(
       {
         accessorKey: 'prompt_tokens',
         header: t('Tokens', { context: 'usage' }),
+        meta: { headerSuffix: <TokenCacheHelp /> },
         cell: ({ row }) => {
           const log = row.original
           if (!isDisplayableLogType(log.type)) return null
