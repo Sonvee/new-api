@@ -186,6 +186,10 @@ export interface LogOtherData {
   text_input?: number
   text_output?: number
   cache_tokens?: number
+  /** 服务端归一化的缓存写入总量，已包含 5m/1h 明细。 */
+  cache_write_tokens?: number
+  /** 服务端确认的输入总量，包含缓存读取和写入。 */
+  input_tokens_total?: number
   image_cache_tokens?: number
   billing_tokens?: Record<string, number>
   cache_creation_tokens?: number

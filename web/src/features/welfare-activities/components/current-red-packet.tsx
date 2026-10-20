@@ -45,6 +45,13 @@ export function CurrentRedPacket(props: {
     toIntlLocale(i18n.resolvedLanguage || i18n.language) ?? 'en-US'
   const { mutation, claimIssue } = useRedPacketClaim()
   const { deadline, remainingSeconds } = useWelfareCountdown(props.current)
+  const countdown = [
+    Math.floor(remainingSeconds / 3600),
+    Math.floor((remainingSeconds % 3600) / 60),
+    remainingSeconds % 60,
+  ]
+    .map((value) => String(value).padStart(2, '0'))
+    .join(':')
   // 到点可提交预约期号，领取接口会原子激活；不向旧期再发领取请求。
   const replacementDue =
     props.current.upcoming !== null && remainingSeconds === 0
@@ -149,8 +156,8 @@ export function CurrentRedPacket(props: {
                       ? t('Next issue countdown')
                       : t('Countdown')}
                   </dt>
-                  <dd>
-                    {formatNumber(remainingSeconds, locale)} {t('seconds')}
+                  <dd className='tabular-nums whitespace-nowrap'>
+                    {countdown}
                   </dd>
                 </div>
               ) : null}

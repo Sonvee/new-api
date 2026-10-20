@@ -1026,6 +1026,7 @@
     "Cache Directory Disk Space": "Espace disque du répertoire de cache",
     "Cache Directory Info": "Infos du répertoire de cache",
     "Cache Entries": "Entrées de cache",
+    "Cache hit rate": "Taux de succès du cache",
     "Cache mode": "Mode de cache",
     "Cache pricing": "Tarification du cache",
     "Cache ratio": "Ratio de cache",
