@@ -385,17 +385,25 @@ func RecordConsumeLog(c *gin.Context, userId int, params RecordConsumeLogParams)
 	if err != nil {
 		logger.LogError(c, common.LogText("failed to record log: %s", err.Error()))
 	}
+	var cacheReadTokens, cacheCreationTokens int
+	if other != nil {
+		cacheReadTokens, _ = other.public["cache_tokens"].(int)
+		// 结算路径已归一化缓存创建总量，不重复累加 5m/1h 明细或从价格推算。
+		cacheCreationTokens, _ = other.public["cache_write_tokens"].(int)
+	}
 	LogQuotaData(QuotaDataLogParams{
-		UserID:    userId,
-		Username:  username,
-		ModelName: params.ModelName,
-		Quota:     params.Quota,
-		CreatedAt: createdAt,
-		TokenUsed: params.PromptTokens + params.CompletionTokens,
-		UseGroup:  params.Group,
-		TokenID:   params.TokenId,
-		ChannelID: params.ChannelId,
-		NodeName:  common.NodeName,
+		UserID:              userId,
+		Username:            username,
+		ModelName:           params.ModelName,
+		Quota:               params.Quota,
+		CreatedAt:           createdAt,
+		TokenUsed:           params.PromptTokens + params.CompletionTokens,
+		CacheReadTokens:     int64(cacheReadTokens),
+		CacheCreationTokens: int64(cacheCreationTokens),
+		UseGroup:            params.Group,
+		TokenID:             params.TokenId,
+		ChannelID:           params.ChannelId,
+		NodeName:            common.NodeName,
 	})
 }
 
