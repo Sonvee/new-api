@@ -89,7 +89,13 @@ export function TokenUsageCell(props: TokenUsageCellProps) {
               </div>
             ))}
             <div className='border-background/20 flex justify-between gap-6 border-t pt-1 font-medium'>
-              <dt>{t('Total Tokens')}:</dt>
+              <dt>{t('Total input tokens')}:</dt>
+              <dd className='font-mono tabular-nums'>
+                {formatNumber(totalInputTokens, locale)}
+              </dd>
+            </div>
+            <div className='flex justify-between gap-6 font-medium'>
+              <dt>{t('Total Token')}:</dt>
               <dd className='font-mono tabular-nums'>
                 {formatNumber(totalTokens, locale)}
               </dd>

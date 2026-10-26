@@ -51,7 +51,7 @@ export function TokenCacheHelp() {
         <TooltipContent
           side='bottom'
           align='start'
-          className='w-85 max-w-[calc(100vw-2rem)] py-2 text-left text-xs leading-relaxed font-normal whitespace-normal'
+          className='w-80 max-w-[calc(100vw-2rem)] py-2 text-left text-xs leading-relaxed font-normal whitespace-normal'
         >
           <div className='space-y-2'>
             <div className='space-y-1'>
