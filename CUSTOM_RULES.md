@@ -143,4 +143,3 @@ docker compose up -d --no-build --force-recreate
 ## 数据备份规则
 
 - 数据库备份：PostgreSQL 必须使用 `pg_dump` 等数据库原生工具将全部业务数据在线导出。
-- 项目备份：只需保存 `/www/dk_project/dk_app/new-api/docker-compose.yml`。
