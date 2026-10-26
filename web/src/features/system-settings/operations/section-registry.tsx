@@ -152,6 +152,11 @@ const OPERATIONS_SECTIONS = [
       />
     ),
   },
+  {
+    id: 'backup',
+    titleKey: 'System Backup',
+    build: () => null,
+  },
 ] as const
 
 export type OperationsSectionId = (typeof OPERATIONS_SECTIONS)[number]['id']
