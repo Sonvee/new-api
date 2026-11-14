@@ -3,12 +3,12 @@ package console_setting
 import (
 	"fmt"
 	"net/url"
-	"regexp"
 	"sort"
 	"strings"
 	"time"
 	"unicode/utf16"
 
+	"github.com/MoeForge/moego/regexp"
 	"github.com/QuantumNous/new-api/common"
 )
 

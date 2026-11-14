@@ -31,7 +31,8 @@ type StaticRowActionsProps = {
   deleteLabel: string
   menuLabel: string
   onEdit: () => void
-  onDelete: () => void
+  /** Without it the row has nothing to delete. */
+  onDelete?: () => void
   pinLabel?: string
   onPin?: () => void
   editDisabled?: boolean
@@ -39,6 +40,8 @@ type StaticRowActionsProps = {
 }
 
 export function StaticRowActions(props: StaticRowActionsProps) {
+  const hasPinAction = Boolean(props.pinLabel && props.onPin)
+
   return (
     <div className='flex justify-end gap-1'>
       <Button
@@ -50,26 +53,30 @@ export function StaticRowActions(props: StaticRowActionsProps) {
       >
         <Pencil />
       </Button>
-      <DataTableRowActionMenu ariaLabel={props.menuLabel}>
-        {props.pinLabel && props.onPin ? (
-          <DropdownMenuItem onClick={props.onPin}>
-            {props.pinLabel}
-            <DropdownMenuShortcut>
-              <Pin size={16} />
-            </DropdownMenuShortcut>
-          </DropdownMenuItem>
-        ) : null}
-        <DropdownMenuItem
-          onClick={props.onDelete}
-          disabled={props.deleteDisabled}
-          className='text-destructive focus:text-destructive'
-        >
-          {props.deleteLabel}
-          <DropdownMenuShortcut>
-            <Trash2 size={16} />
-          </DropdownMenuShortcut>
-        </DropdownMenuItem>
-      </DataTableRowActionMenu>
+      {(hasPinAction || props.onDelete) && (
+        <DataTableRowActionMenu ariaLabel={props.menuLabel}>
+          {hasPinAction && (
+            <DropdownMenuItem onClick={props.onPin}>
+              {props.pinLabel}
+              <DropdownMenuShortcut>
+                <Pin size={16} />
+              </DropdownMenuShortcut>
+            </DropdownMenuItem>
+          )}
+          {props.onDelete && (
+            <DropdownMenuItem
+              onClick={props.onDelete}
+              disabled={props.deleteDisabled}
+              className='text-destructive focus:text-destructive'
+            >
+              {props.deleteLabel}
+              <DropdownMenuShortcut>
+                <Trash2 size={16} />
+              </DropdownMenuShortcut>
+            </DropdownMenuItem>
+          )}
+        </DataTableRowActionMenu>
+      )}
     </div>
   )
 }
