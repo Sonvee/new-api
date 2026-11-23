@@ -95,7 +95,7 @@ function sidebarFor(admin?: object, user?: object, canConfigure = true) {
 }
 
 describe('security sidebar visibility', () => {
-  it('old configurations show Security & Access immediately after Profile and keep API Keys', () => {
+  it('old configurations show Security & Access after Profile and keep API Keys', () => {
     const { result } = sidebarFor(
       { personal: { enabled: true, personal: true, topup: true } },
       { personal: { enabled: true, personal: true } }
@@ -104,7 +104,14 @@ describe('security sidebar visibility', () => {
       result.current
         .find((group) => group.id === 'personal')
         ?.items.map((item) => item.title)
-    ).toEqual(['Wallet', 'Profile', 'Security & Access'])
+    ).toEqual([
+      'Wallet',
+      'Billing Records',
+      'Invitation Rewards',
+      'Welfare Activities',
+      'Profile',
+      'Security & Access',
+    ])
     expect(
       result.current
         .flatMap((group) => group.items)
@@ -139,6 +146,100 @@ describe('security sidebar visibility', () => {
         .some((item) => item.title === 'Security & Access')
     ).toBe(true)
   })
+})
+
+describe('affiliate rewards sidebar entry', () => {
+  it('legacy configurations show Invitation Rewards in the Personal section', () => {
+    const { result } = sidebarFor(
+      { personal: { enabled: true, topup: true, personal: true } },
+      { personal: { enabled: true, topup: true, personal: true } }
+    )
+    expect(
+      result.current
+        .find((group) => group.id === 'personal')
+        ?.items.map((item) => item.title)
+    ).toEqual([
+      'Wallet',
+      'Billing Records',
+      'Invitation Rewards',
+      'Welfare Activities',
+      'Profile',
+      'Security & Access',
+    ])
+  })
+
+  it.each([
+    [{ personal: { enabled: true, affiliate: false } }, undefined],
+    [{ personal: { enabled: false } }, { personal: { affiliate: true } }],
+    [undefined, { personal: { enabled: true, affiliate: false } }],
+    [undefined, { personal: { enabled: false } }],
+  ])(
+    'admin or user disablement hides Invitation Rewards (%j, %j)',
+    (admin, user) => {
+      const { result } = sidebarFor(admin, user)
+      expect(
+        result.current
+          .flatMap((group) => group.items)
+          .some((item) => item.title === 'Invitation Rewards')
+      ).toBe(false)
+    }
+  )
+})
+
+describe('billing records sidebar entry', () => {
+  it('shows Billing Records by default and hides it when disabled', () => {
+    const visible = sidebarFor({
+      personal: { enabled: true, billing: true },
+    })
+    expect(
+      visible.result.current
+        .find((group) => group.id === 'personal')
+        ?.items.map((item) => item.title)
+    ).toContain('Billing Records')
+
+    const hidden = sidebarFor({
+      personal: { enabled: true, billing: false },
+    })
+    expect(
+      hidden.result.current
+        .flatMap((group) => group.items)
+        .some((item) => item.title === 'Billing Records')
+    ).toBe(false)
+  })
+})
+
+describe('welfare activities sidebar entry', () => {
+  it('legacy configurations show Welfare Activities below Invitation Rewards', () => {
+    const { result } = sidebarFor(
+      { personal: { enabled: true, affiliate: true } },
+      { personal: { enabled: true, affiliate: true } }
+    )
+    const items = result.current.find((group) => group.id === 'personal')?.items
+    const invitationIndex =
+      items?.findIndex((item) => item.title === 'Invitation Rewards') ?? -1
+
+    expect(items?.[invitationIndex + 1]).toMatchObject({
+      title: 'Welfare Activities',
+      url: '/welfare-activities',
+    })
+  })
+
+  it.each([
+    [{ personal: { enabled: true, welfare: false } }, undefined],
+    [{ personal: { enabled: false } }, { personal: { welfare: true } }],
+    [undefined, { personal: { enabled: true, welfare: false } }],
+    [undefined, { personal: { enabled: false } }],
+  ])(
+    'admin or user disablement hides Welfare Activities (%j, %j)',
+    (admin, user) => {
+      const { result } = sidebarFor(admin, user)
+      expect(
+        result.current
+          .flatMap((group) => group.items)
+          .some((item) => item.title === 'Welfare Activities')
+      ).toBe(false)
+    }
+  )
 })
 
 describe('audit log sidebar entry', () => {

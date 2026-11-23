@@ -389,29 +389,27 @@ func RecordConsumeLog(c *gin.Context, userId int, params RecordConsumeLogParams)
 	if err != nil {
 		logger.LogError(c, common.LogText("failed to record log: %s", err.Error()))
 	}
-	if common.DataExportEnabled {
-		var cacheReadTokens, cacheCreationTokens int
-		if other != nil {
-			cacheReadTokens, _ = other.public["cache_tokens"].(int)
-			// The settlement path already normalizes the cache creation total.
-			// Do not add the 5m/1h breakdown again or infer tokens from prices.
-			cacheCreationTokens, _ = other.public["cache_write_tokens"].(int)
-		}
-		LogQuotaData(QuotaDataLogParams{
-			UserID:              userId,
-			Username:            username,
-			ModelName:           params.ModelName,
-			Quota:               params.Quota,
-			CreatedAt:           createdAt,
-			TokenUsed:           params.PromptTokens + params.CompletionTokens,
-			CacheReadTokens:     int64(cacheReadTokens),
-			CacheCreationTokens: int64(cacheCreationTokens),
-			UseGroup:            params.Group,
-			TokenID:             params.TokenId,
-			ChannelID:           params.ChannelId,
-			NodeName:            common.NodeName,
-		})
+	var cacheReadTokens, cacheCreationTokens int
+	if other != nil {
+		cacheReadTokens, _ = other.public["cache_tokens"].(int)
+		// The settlement path already normalizes the cache creation total.
+		// Do not add the 5m/1h breakdown again or infer tokens from prices.
+		cacheCreationTokens, _ = other.public["cache_write_tokens"].(int)
 	}
+	LogQuotaData(QuotaDataLogParams{
+		UserID:              userId,
+		Username:            username,
+		ModelName:           params.ModelName,
+		Quota:               params.Quota,
+		CreatedAt:           createdAt,
+		TokenUsed:           params.PromptTokens + params.CompletionTokens,
+		CacheReadTokens:     int64(cacheReadTokens),
+		CacheCreationTokens: int64(cacheCreationTokens),
+		UseGroup:            params.Group,
+		TokenID:             params.TokenId,
+		ChannelID:           params.ChannelId,
+		NodeName:            common.NodeName,
+	})
 }
 
 type RecordTaskBillingLogParams struct {
@@ -458,7 +456,7 @@ func RecordTaskBillingLog(params RecordTaskBillingLogParams) {
 	if err != nil {
 		common.SysLog(common.LogText("failed to record task billing log: %s", err.Error()))
 	}
-	if params.LogType == LogTypeConsume && common.DataExportEnabled {
+	if params.LogType == LogTypeConsume {
 		nodeName := params.NodeName
 		if nodeName == "" {
 			nodeName = common.NodeName

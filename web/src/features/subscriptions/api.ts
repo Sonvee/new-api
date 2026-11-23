@@ -30,6 +30,8 @@ import type {
   SubscriptionPayResponse,
   SubscriptionPayRequest,
   SelfSubscriptionData,
+  CleanupSubscriptionsResponse,
+  SubscriptionMoveDirection,
 } from './types'
 
 // ============================================================================
@@ -229,6 +231,23 @@ export async function updateBillingPreference(
 ): Promise<ApiResponse<{ billing_preference?: string }>> {
   const res = await api.put('/api/subscription/self/preference', {
     billing_preference: preference,
+  })
+  return res.data
+}
+
+export async function cleanupSelfSubscriptions(): Promise<
+  ApiResponse<CleanupSubscriptionsResponse>
+> {
+  const res = await api.delete('/api/subscription/self/expired')
+  return res.data
+}
+
+export async function moveSelfSubscription(
+  subscriptionId: number,
+  direction: SubscriptionMoveDirection
+): Promise<ApiResponse> {
+  const res = await api.post(`/api/subscription/self/${subscriptionId}/move`, {
+    direction,
   })
   return res.data
 }

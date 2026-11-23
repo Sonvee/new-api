@@ -16,7 +16,15 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Crown, RefreshCw, Sparkles, Check } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowUp,
+  Check,
+  Crown,
+  RefreshCw,
+  Sparkles,
+  Trash2,
+} from 'lucide-react'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -26,6 +34,7 @@ import {
   dotColorMap,
   textColorMap,
 } from '@/components/status-badge'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -46,14 +55,17 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import {
+  cleanupSelfSubscriptions,
   getPublicPlans,
   getSelfSubscriptionFull,
+  moveSelfSubscription,
   updateBillingPreference,
 } from '@/features/subscriptions/api'
 import { SubscriptionPurchaseDialog } from '@/features/subscriptions/components/dialogs/subscription-purchase-dialog'
 import { formatDuration, formatResetPeriod } from '@/features/subscriptions/lib'
 import type {
   PlanRecord,
+  SubscriptionMoveDirection,
   UserSubscriptionRecord,
 } from '@/features/subscriptions/types'
 import { formatQuota } from '@/lib/format'
@@ -113,6 +125,11 @@ export function SubscriptionPlansCard({
     useState('subscription_first')
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [cleaning, setCleaning] = useState(false)
+  const [cleanupDialogOpen, setCleanupDialogOpen] = useState(false)
+  const [movingSubscriptionId, setMovingSubscriptionId] = useState<number | null>(
+    null
+  )
 
   const [purchaseOpen, setPurchaseOpen] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<PlanRecord | null>(null)
@@ -171,6 +188,45 @@ export function SubscriptionPlansCard({
     }
   }
 
+  const handleCleanup = async () => {
+    setCleaning(true)
+    try {
+      const res = requireServerSuccess(await cleanupSelfSubscriptions())
+      if (res.success) {
+        setCleanupDialogOpen(false)
+        toast.success(
+          t('Cleaned up {{count}} invalid subscriptions', {
+            count: res.data?.deleted_count ?? 0,
+          })
+        )
+        await fetchSelfSubscription()
+      }
+    } catch (error) {
+      handleServerError(error, t('Cleanup failed'))
+    } finally {
+      setCleaning(false)
+    }
+  }
+
+  const handleMoveSubscription = async (
+    subscriptionId: number,
+    direction: SubscriptionMoveDirection
+  ) => {
+    setMovingSubscriptionId(subscriptionId)
+    try {
+      requireServerSuccess(
+        await moveSelfSubscription(subscriptionId, direction)
+      )
+      await fetchSelfSubscription()
+      toast.success(t('Subscription order updated'))
+    } catch (error) {
+      handleServerError(error, t('Request failed'))
+      await fetchSelfSubscription()
+    } finally {
+      setMovingSubscriptionId(null)
+    }
+  }
+
   const handlePreferenceChange = async (pref: string) => {
     const previous = billingPreference
     setBillingPreference(pref)
@@ -190,8 +246,14 @@ export function SubscriptionPlansCard({
     }
   }
 
+  const currentUnixTime = Date.now() / 1000
   const hasActive = activeSubscriptions.length > 0
   const hasAny = allSubscriptions.length > 0
+  const hasCleanableSubscriptions = allSubscriptions.some(
+    ({ subscription }) =>
+      subscription.status !== 'active' ||
+      subscription.end_time <= currentUnixTime
+  )
   const isAvailable = loading || plans.length > 0 || hasAny
   const disablePref = !hasActive
   const isSubPref =
@@ -370,8 +432,21 @@ export function SubscriptionPlansCard({
                 variant='ghost'
                 size='icon'
                 className='h-8 w-8'
+                onClick={() => setCleanupDialogOpen(true)}
+                disabled={!hasCleanableSubscriptions || cleaning || refreshing}
+                aria-label={t('Clean up invalid subscriptions')}
+                title={t('Clean up invalid subscriptions')}
+              >
+                <Trash2 className='h-3.5 w-3.5' />
+              </Button>
+              <Button
+                variant='ghost'
+                size='icon'
+                className='h-8 w-8'
                 onClick={handleRefresh}
-                disabled={refreshing}
+                disabled={refreshing || cleaning}
+                aria-label={t('Refresh subscriptions')}
+                title={t('Refresh subscriptions')}
               >
                 <RefreshCw
                   className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`}
@@ -398,7 +473,7 @@ export function SubscriptionPlansCard({
             <>
               <Separator className='my-3' />
               <div className='max-h-64 space-y-3 overflow-y-auto pr-1'>
-                {allSubscriptions.map((sub) => {
+                {allSubscriptions.map((sub, index) => {
                   const subscription = sub.subscription
                   const totalAmount = Number(subscription?.amount_total || 0)
                   const usedAmount = Number(subscription?.amount_used || 0)
@@ -408,8 +483,8 @@ export function SubscriptionPlansCard({
                     planTitleMap.get(subscription?.plan_id) || ''
                   const remainDays = getRemainingDays(sub)
                   const usagePercent = getUsagePercent(sub)
-                  const now = Date.now() / 1000
-                  const isExpired = (subscription?.end_time || 0) < now
+                  const isExpired =
+                    (subscription?.end_time || 0) < currentUnixTime
                   const isCancelled = subscription?.status === 'cancelled'
                   const isActive =
                     subscription?.status === 'active' && !isExpired
@@ -451,22 +526,55 @@ export function SubscriptionPlansCard({
                       key={subscription?.id}
                       className='bg-background rounded-md border p-3 text-xs'
                     >
-                      <div className='flex items-center justify-between'>
-                        <div className='flex items-center gap-2'>
-                          <span className='font-medium'>
+                      <div className='flex items-start justify-between gap-2'>
+                        <div className='flex min-w-0 items-center gap-2'>
+                          <span className='truncate font-medium'>
                             {planTitle
                               ? `${planTitle} · ${t('Subscription')} #${subscription?.id}`
                               : `${t('Subscription')} #${subscription?.id}`}
                           </span>
                           {statusBadge}
                         </div>
-                        {isActive && (
-                          <span className='text-muted-foreground'>
-                            {t('{{count}} days remaining', {
-                              count: remainDays,
-                            })}
-                          </span>
-                        )}
+                        <div className='flex shrink-0 items-center gap-1'>
+                          {isActive && (
+                            <span className='text-muted-foreground mr-1 hidden sm:inline'>
+                              {t('{{count}} days remaining', {
+                                count: remainDays,
+                              })}
+                            </span>
+                          )}
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            className='h-6 w-6'
+                            onClick={() =>
+                              handleMoveSubscription(subscription.id, 'up')
+                            }
+                            disabled={
+                              index === 0 || movingSubscriptionId !== null
+                            }
+                            aria-label={t('Move subscription up')}
+                            title={t('Move subscription up')}
+                          >
+                            <ArrowUp className='h-3.5 w-3.5' />
+                          </Button>
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            className='h-6 w-6'
+                            onClick={() =>
+                              handleMoveSubscription(subscription.id, 'down')
+                            }
+                            disabled={
+                              index === allSubscriptions.length - 1 ||
+                              movingSubscriptionId !== null
+                            }
+                            aria-label={t('Move subscription down')}
+                            title={t('Move subscription down')}
+                          >
+                            <ArrowDown className='h-3.5 w-3.5' />
+                          </Button>
+                        </div>
                       </div>
                       <div className='text-muted-foreground mt-1.5'>
                         {endTimeLabel}{' '}
@@ -633,6 +741,19 @@ export function SubscriptionPlansCard({
           </p>
         )}
       </TitledCard>
+
+      <ConfirmDialog
+        open={cleanupDialogOpen}
+        onOpenChange={setCleanupDialogOpen}
+        title={t('Clean up invalid subscriptions')}
+        desc={t(
+          'Expired and cancelled subscriptions will be permanently deleted. Continue?'
+        )}
+        confirmText={t('Clean up')}
+        destructive
+        handleConfirm={handleCleanup}
+        isLoading={cleaning}
+      />
 
       <SubscriptionPurchaseDialog
         open={purchaseOpen}

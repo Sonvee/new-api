@@ -33,4 +33,5 @@ export const SYSTEM_TASK_TYPE_LABEL: Record<string, string> = {
   sync_oauth_providers: 'Login provider sync',
   sync_models: 'Model sync',
   sync_subscription_plans: 'Subscription plan sync',
+  welfare_activity: 'Welfare Activities',
 }

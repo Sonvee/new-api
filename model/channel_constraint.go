@@ -13,6 +13,7 @@ var filterEvalOrder = []dto.ChannelFilterKind{
 	dto.FilterTaskPluginEndpoint,
 	dto.FilterTaskPluginIdentity,
 	dto.FilterResponsesWebSocket,
+	dto.FilterPlaygroundDisabled,
 }
 
 // ChannelSatisfiesFilters reports whether ch passes every filter.
@@ -143,6 +144,8 @@ func channelMatchesFilter(ch *Channel, modelName string, filter dto.ChannelFilte
 		default:
 			return false
 		}
+	case dto.FilterPlaygroundDisabled:
+		return !ch.GetOtherSettings().DisablePlayground
 	default:
 		return true
 	}

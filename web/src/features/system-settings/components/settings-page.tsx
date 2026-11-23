@@ -54,9 +54,10 @@ type SettingsPageProps<
 type SettingsPageFrameProps = {
   title: ReactNode
   children: ReactNode
+  fixedContent?: boolean
 }
 
-function SettingsPageFrame(props: SettingsPageFrameProps) {
+export function SettingsPageFrame(props: SettingsPageFrameProps) {
   const [actionsContainer, setActionsContainer] =
     useState<HTMLDivElement | null>(null)
   const [titleStatusContainer, setTitleStatusContainer] =
@@ -67,7 +68,7 @@ function SettingsPageFrame(props: SettingsPageFrameProps) {
       actionsContainer={actionsContainer}
       titleStatusContainer={titleStatusContainer}
     >
-      <SectionPageLayout>
+      <SectionPageLayout fixedContent={props.fixedContent}>
         <SectionPageLayout.Title>
           <span className='inline-flex max-w-full min-w-0 items-center gap-2 align-middle'>
             <span className='truncate'>{props.title}</span>

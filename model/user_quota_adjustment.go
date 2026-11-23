@@ -66,6 +66,18 @@ func AdjustUserQuota(userID, operatorRole int, mode string, value int) (*UserQuo
 			if result.RowsAffected != 1 {
 				return gorm.ErrRecordNotFound
 			}
+			if err := recordWalletLedgerTx(tx, userID, after-user.Quota, user.Quota, after, WalletLedgerMeta{
+				Type:       WalletLedgerTypeAdminAdjustment,
+				SourceType: "admin_adjustment",
+				SourceId:   common.GetUUID(),
+			}); err != nil {
+				return err
+			}
+		}
+		if after > user.Quota {
+			if _, err := processAffiliateQuotaCredit(tx, userID, after-user.Quota, false); err != nil {
+				return err
+			}
 		}
 		adjustment = UserQuotaAdjustment{UserID: user.Id, Username: user.Username, Before: user.Quota, After: after}
 		return nil

@@ -40,6 +40,7 @@ const (
 	FilterTaskPluginEndpoint ChannelFilterKind = "task_plugin_endpoint"
 	FilterTaskPluginIdentity ChannelFilterKind = "task_plugin_identity"
 	FilterResponsesWebSocket ChannelFilterKind = "responses_websocket"
+	FilterPlaygroundDisabled ChannelFilterKind = "playground_disabled"
 )
 
 type ChannelFilter struct {

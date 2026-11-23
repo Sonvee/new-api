@@ -47,6 +47,24 @@ export const STATIC_I18N_KEYS = [
   'No enabled channel key',
   'Invalid channel header override',
   'Invalid channel proxy',
+
+  // Accounting filters and mutation messages referenced through constants.
+  '1 Day',
+  '7 Days',
+  '30 Days',
+  'Hour',
+  'Day',
+  'Week',
+  'All',
+  'WeChat Pay',
+  'Alipay',
+  'Stripe',
+  'Creem',
+  'Waffo',
+  'Waffo Pancake',
+  'Accounting entry created',
+  'Accounting entry updated',
+  'Accounting entry deleted',
   'For this channel, map the model name in client requests to the model name sent upstream.',
   // Channel provider labels, descriptions and presentation badges.
   'Zhipu GLM',
@@ -204,6 +222,7 @@ export const STATIC_I18N_KEYS = [
   'Rankings',
   'Docs',
   'About',
+  'Use an internal path starting with / or a full http(s) URL.',
 
   // Sidebar views (drill-in workspaces)
   'System Settings',

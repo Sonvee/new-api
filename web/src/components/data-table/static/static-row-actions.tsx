@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Pin, Trash2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -33,6 +33,8 @@ type StaticRowActionsProps = {
   onEdit: () => void
   /** Without it the row has nothing to delete and shows only the edit button. */
   onDelete?: () => void
+  pinLabel?: string
+  onPin?: () => void
   editDisabled?: boolean
   deleteDisabled?: boolean
 }
@@ -49,18 +51,28 @@ export function StaticRowActions(props: StaticRowActionsProps) {
       >
         <Pencil />
       </Button>
-      {props.onDelete && (
+      {(props.onDelete || (props.pinLabel && props.onPin)) && (
         <DataTableRowActionMenu ariaLabel={props.menuLabel}>
-          <DropdownMenuItem
-            onClick={props.onDelete}
-            disabled={props.deleteDisabled}
-            className='text-destructive focus:text-destructive'
-          >
-            {props.deleteLabel}
-            <DropdownMenuShortcut>
-              <Trash2 size={16} />
-            </DropdownMenuShortcut>
-          </DropdownMenuItem>
+          {props.pinLabel && props.onPin ? (
+            <DropdownMenuItem onClick={props.onPin}>
+              {props.pinLabel}
+              <DropdownMenuShortcut>
+                <Pin size={16} />
+              </DropdownMenuShortcut>
+            </DropdownMenuItem>
+          ) : null}
+          {props.onDelete ? (
+            <DropdownMenuItem
+              onClick={props.onDelete}
+              disabled={props.deleteDisabled}
+              className='text-destructive focus:text-destructive'
+            >
+              {props.deleteLabel}
+              <DropdownMenuShortcut>
+                <Trash2 size={16} />
+              </DropdownMenuShortcut>
+            </DropdownMenuItem>
+          ) : null}
         </DataTableRowActionMenu>
       )}
     </div>

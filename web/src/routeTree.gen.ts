@@ -34,6 +34,9 @@ import { Route as PricingIndexRouteImport } from './routes/pricing/index'
 import { Route as RankingsIndexRouteImport } from './routes/rankings/index'
 import { Route as SetupIndexRouteImport } from './routes/setup/index'
 import { Route as authUserResetRouteImport } from './routes/(auth)/user/reset'
+import { Route as AuthenticatedAccountingIndexRouteImport } from './routes/_authenticated/accounting/index'
+import { Route as AuthenticatedAffiliateRewardsIndexRouteImport } from './routes/_authenticated/affiliate-rewards/index'
+import { Route as AuthenticatedBillingRecordsIndexRouteImport } from './routes/_authenticated/billing-records/index'
 import { Route as AuthenticatedChannelsIndexRouteImport } from './routes/_authenticated/channels/index'
 import { Route as AuthenticatedChatChatIdRouteImport } from './routes/_authenticated/chat/$chatId'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard/index'
@@ -56,6 +59,7 @@ import { Route as AuthenticatedUsageLogsSectionRouteImport } from './routes/_aut
 import { Route as AuthenticatedUsageLogsAuditRouteImport } from './routes/_authenticated/usage-logs/audit'
 import { Route as AuthenticatedUsersIndexRouteImport } from './routes/_authenticated/users/index'
 import { Route as AuthenticatedWalletIndexRouteImport } from './routes/_authenticated/wallet/index'
+import { Route as AuthenticatedWelfareActivitiesIndexRouteImport } from './routes/_authenticated/welfare-activities/index'
 import { Route as PricingModelIdIndexRouteImport } from './routes/pricing/$modelId/index'
 import { Route as AuthenticatedSystemSettingsAuthIndexRouteImport } from './routes/_authenticated/system-settings/auth/index'
 import { Route as AuthenticatedSystemSettingsAuthSectionRouteImport } from './routes/_authenticated/system-settings/auth/$section'
@@ -74,6 +78,7 @@ import { Route as AuthenticatedSystemSettingsSecuritySectionRouteImport } from '
 import { Route as AuthenticatedSystemSettingsSiteIndexRouteImport } from './routes/_authenticated/system-settings/site/index'
 import { Route as AuthenticatedSystemSettingsSiteSectionRouteImport } from './routes/_authenticated/system-settings/site/$section'
 import { Route as AuthenticatedOauthPluginKeyCallbackRouteImport } from './routes/_authenticated/oauth/plugin/$key/callback'
+import { Route as AuthenticatedSystemSettingsBillingAffiliateRewardsIndexRouteImport } from './routes/_authenticated/system-settings/billing/affiliate-rewards/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -199,6 +204,24 @@ const authUserResetRoute = authUserResetRouteImport.update({
   path: '/user/reset',
   getParentRoute: () => authRouteRoute,
 } as any)
+const AuthenticatedAccountingIndexRoute =
+  AuthenticatedAccountingIndexRouteImport.update({
+    id: '/accounting/',
+    path: '/accounting/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAffiliateRewardsIndexRoute =
+  AuthenticatedAffiliateRewardsIndexRouteImport.update({
+    id: '/affiliate-rewards/',
+    path: '/affiliate-rewards/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedBillingRecordsIndexRoute =
+  AuthenticatedBillingRecordsIndexRouteImport.update({
+    id: '/billing-records/',
+    path: '/billing-records/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedChannelsIndexRoute =
   AuthenticatedChannelsIndexRouteImport.update({
     id: '/channels/',
@@ -328,6 +351,12 @@ const AuthenticatedWalletIndexRoute =
     path: '/wallet/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedWelfareActivitiesIndexRoute =
+  AuthenticatedWelfareActivitiesIndexRouteImport.update({
+    id: '/welfare-activities/',
+    path: '/welfare-activities/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const PricingModelIdIndexRoute = PricingModelIdIndexRouteImport.update({
   id: '/pricing/$modelId/',
   path: '/pricing/$modelId/',
@@ -435,7 +464,12 @@ const AuthenticatedOauthPluginKeyCallbackRoute =
     path: '/oauth/plugin/$key/callback',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-
+const AuthenticatedSystemSettingsBillingAffiliateRewardsIndexRoute =
+  AuthenticatedSystemSettingsBillingAffiliateRewardsIndexRouteImport.update({
+    id: '/billing/affiliate-rewards/',
+    path: '/billing/affiliate-rewards/',
+    getParentRoute: () => AuthenticatedSystemSettingsRouteRoute,
+  } as any)
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
@@ -466,6 +500,9 @@ export interface FileRoutesByFullPath {
   '/models/$section': typeof AuthenticatedModelsSectionRoute
   '/usage-logs/$section': typeof AuthenticatedUsageLogsSectionRoute
   '/usage-logs/audit': typeof AuthenticatedUsageLogsAuditRoute
+  '/accounting/': typeof AuthenticatedAccountingIndexRoute
+  '/affiliate-rewards/': typeof AuthenticatedAffiliateRewardsIndexRoute
+  '/billing-records/': typeof AuthenticatedBillingRecordsIndexRoute
   '/channels/': typeof AuthenticatedChannelsIndexRoute
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/keys/': typeof AuthenticatedKeysIndexRoute
@@ -482,6 +519,7 @@ export interface FileRoutesByFullPath {
   '/usage-logs/': typeof AuthenticatedUsageLogsIndexRoute
   '/users/': typeof AuthenticatedUsersIndexRoute
   '/wallet/': typeof AuthenticatedWalletIndexRoute
+  '/welfare-activities/': typeof AuthenticatedWelfareActivitiesIndexRoute
   '/pricing/$modelId/': typeof PricingModelIdIndexRoute
   '/system-settings/auth/$section': typeof AuthenticatedSystemSettingsAuthSectionRoute
   '/system-settings/billing/$section': typeof AuthenticatedSystemSettingsBillingSectionRoute
@@ -500,6 +538,7 @@ export interface FileRoutesByFullPath {
   '/system-settings/security/': typeof AuthenticatedSystemSettingsSecurityIndexRoute
   '/system-settings/site/': typeof AuthenticatedSystemSettingsSiteIndexRoute
   '/oauth/plugin/$key/callback': typeof AuthenticatedOauthPluginKeyCallbackRoute
+  '/system-settings/billing/affiliate-rewards/': typeof AuthenticatedSystemSettingsBillingAffiliateRewardsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -530,6 +569,9 @@ export interface FileRoutesByTo {
   '/models/$section': typeof AuthenticatedModelsSectionRoute
   '/usage-logs/$section': typeof AuthenticatedUsageLogsSectionRoute
   '/usage-logs/audit': typeof AuthenticatedUsageLogsAuditRoute
+  '/accounting': typeof AuthenticatedAccountingIndexRoute
+  '/affiliate-rewards': typeof AuthenticatedAffiliateRewardsIndexRoute
+  '/billing-records': typeof AuthenticatedBillingRecordsIndexRoute
   '/channels': typeof AuthenticatedChannelsIndexRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
   '/keys': typeof AuthenticatedKeysIndexRoute
@@ -546,6 +588,7 @@ export interface FileRoutesByTo {
   '/usage-logs': typeof AuthenticatedUsageLogsIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
   '/wallet': typeof AuthenticatedWalletIndexRoute
+  '/welfare-activities': typeof AuthenticatedWelfareActivitiesIndexRoute
   '/pricing/$modelId': typeof PricingModelIdIndexRoute
   '/system-settings/auth/$section': typeof AuthenticatedSystemSettingsAuthSectionRoute
   '/system-settings/billing/$section': typeof AuthenticatedSystemSettingsBillingSectionRoute
@@ -564,6 +607,7 @@ export interface FileRoutesByTo {
   '/system-settings/security': typeof AuthenticatedSystemSettingsSecurityIndexRoute
   '/system-settings/site': typeof AuthenticatedSystemSettingsSiteIndexRoute
   '/oauth/plugin/$key/callback': typeof AuthenticatedOauthPluginKeyCallbackRoute
+  '/system-settings/billing/affiliate-rewards': typeof AuthenticatedSystemSettingsBillingAffiliateRewardsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -598,6 +642,9 @@ export interface FileRoutesById {
   '/_authenticated/models/$section': typeof AuthenticatedModelsSectionRoute
   '/_authenticated/usage-logs/$section': typeof AuthenticatedUsageLogsSectionRoute
   '/_authenticated/usage-logs/audit': typeof AuthenticatedUsageLogsAuditRoute
+  '/_authenticated/accounting/': typeof AuthenticatedAccountingIndexRoute
+  '/_authenticated/affiliate-rewards/': typeof AuthenticatedAffiliateRewardsIndexRoute
+  '/_authenticated/billing-records/': typeof AuthenticatedBillingRecordsIndexRoute
   '/_authenticated/channels/': typeof AuthenticatedChannelsIndexRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/_authenticated/keys/': typeof AuthenticatedKeysIndexRoute
@@ -614,6 +661,7 @@ export interface FileRoutesById {
   '/_authenticated/usage-logs/': typeof AuthenticatedUsageLogsIndexRoute
   '/_authenticated/users/': typeof AuthenticatedUsersIndexRoute
   '/_authenticated/wallet/': typeof AuthenticatedWalletIndexRoute
+  '/_authenticated/welfare-activities/': typeof AuthenticatedWelfareActivitiesIndexRoute
   '/pricing/$modelId/': typeof PricingModelIdIndexRoute
   '/_authenticated/system-settings/auth/$section': typeof AuthenticatedSystemSettingsAuthSectionRoute
   '/_authenticated/system-settings/billing/$section': typeof AuthenticatedSystemSettingsBillingSectionRoute
@@ -632,6 +680,7 @@ export interface FileRoutesById {
   '/_authenticated/system-settings/security/': typeof AuthenticatedSystemSettingsSecurityIndexRoute
   '/_authenticated/system-settings/site/': typeof AuthenticatedSystemSettingsSiteIndexRoute
   '/_authenticated/oauth/plugin/$key/callback': typeof AuthenticatedOauthPluginKeyCallbackRoute
+  '/_authenticated/system-settings/billing/affiliate-rewards/': typeof AuthenticatedSystemSettingsBillingAffiliateRewardsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -665,6 +714,9 @@ export interface FileRouteTypes {
     | '/models/$section'
     | '/usage-logs/$section'
     | '/usage-logs/audit'
+    | '/accounting/'
+    | '/affiliate-rewards/'
+    | '/billing-records/'
     | '/channels/'
     | '/dashboard/'
     | '/keys/'
@@ -681,6 +733,7 @@ export interface FileRouteTypes {
     | '/usage-logs/'
     | '/users/'
     | '/wallet/'
+    | '/welfare-activities/'
     | '/pricing/$modelId/'
     | '/system-settings/auth/$section'
     | '/system-settings/billing/$section'
@@ -699,6 +752,7 @@ export interface FileRouteTypes {
     | '/system-settings/security/'
     | '/system-settings/site/'
     | '/oauth/plugin/$key/callback'
+    | '/system-settings/billing/affiliate-rewards/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -729,6 +783,9 @@ export interface FileRouteTypes {
     | '/models/$section'
     | '/usage-logs/$section'
     | '/usage-logs/audit'
+    | '/accounting'
+    | '/affiliate-rewards'
+    | '/billing-records'
     | '/channels'
     | '/dashboard'
     | '/keys'
@@ -745,6 +802,7 @@ export interface FileRouteTypes {
     | '/usage-logs'
     | '/users'
     | '/wallet'
+    | '/welfare-activities'
     | '/pricing/$modelId'
     | '/system-settings/auth/$section'
     | '/system-settings/billing/$section'
@@ -763,6 +821,7 @@ export interface FileRouteTypes {
     | '/system-settings/security'
     | '/system-settings/site'
     | '/oauth/plugin/$key/callback'
+    | '/system-settings/billing/affiliate-rewards'
   id:
     | '__root__'
     | '/'
@@ -796,6 +855,9 @@ export interface FileRouteTypes {
     | '/_authenticated/models/$section'
     | '/_authenticated/usage-logs/$section'
     | '/_authenticated/usage-logs/audit'
+    | '/_authenticated/accounting/'
+    | '/_authenticated/affiliate-rewards/'
+    | '/_authenticated/billing-records/'
     | '/_authenticated/channels/'
     | '/_authenticated/dashboard/'
     | '/_authenticated/keys/'
@@ -812,6 +874,7 @@ export interface FileRouteTypes {
     | '/_authenticated/usage-logs/'
     | '/_authenticated/users/'
     | '/_authenticated/wallet/'
+    | '/_authenticated/welfare-activities/'
     | '/pricing/$modelId/'
     | '/_authenticated/system-settings/auth/$section'
     | '/_authenticated/system-settings/billing/$section'
@@ -830,6 +893,7 @@ export interface FileRouteTypes {
     | '/_authenticated/system-settings/security/'
     | '/_authenticated/system-settings/site/'
     | '/_authenticated/oauth/plugin/$key/callback'
+    | '/_authenticated/system-settings/billing/affiliate-rewards/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1028,6 +1092,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authUserResetRouteImport
       parentRoute: typeof authRouteRoute
     }
+    '/_authenticated/accounting/': {
+      id: '/_authenticated/accounting/'
+      path: '/accounting'
+      fullPath: '/accounting/'
+      preLoaderRoute: typeof AuthenticatedAccountingIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/affiliate-rewards/': {
+      id: '/_authenticated/affiliate-rewards/'
+      path: '/affiliate-rewards'
+      fullPath: '/affiliate-rewards/'
+      preLoaderRoute: typeof AuthenticatedAffiliateRewardsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/billing-records/': {
+      id: '/_authenticated/billing-records/'
+      path: '/billing-records'
+      fullPath: '/billing-records/'
+      preLoaderRoute: typeof AuthenticatedBillingRecordsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/channels/': {
       id: '/_authenticated/channels/'
       path: '/channels'
@@ -1182,6 +1267,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWalletIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/welfare-activities/': {
+      id: '/_authenticated/welfare-activities/'
+      path: '/welfare-activities'
+      fullPath: '/welfare-activities/'
+      preLoaderRoute: typeof AuthenticatedWelfareActivitiesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/pricing/$modelId/': {
       id: '/pricing/$modelId/'
       path: '/pricing/$modelId'
@@ -1308,6 +1400,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOauthPluginKeyCallbackRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/system-settings/billing/affiliate-rewards/': {
+      id: '/_authenticated/system-settings/billing/affiliate-rewards/'
+      path: '/billing/affiliate-rewards'
+      fullPath: '/system-settings/billing/affiliate-rewards/'
+      preLoaderRoute: typeof AuthenticatedSystemSettingsBillingAffiliateRewardsIndexRouteImport
+      parentRoute: typeof AuthenticatedSystemSettingsRouteRoute
+    }
   }
 }
 
@@ -1355,6 +1454,7 @@ interface AuthenticatedSystemSettingsRouteRouteChildren {
   AuthenticatedSystemSettingsRequestPoliciesIndexRoute: typeof AuthenticatedSystemSettingsRequestPoliciesIndexRoute
   AuthenticatedSystemSettingsSecurityIndexRoute: typeof AuthenticatedSystemSettingsSecurityIndexRoute
   AuthenticatedSystemSettingsSiteIndexRoute: typeof AuthenticatedSystemSettingsSiteIndexRoute
+  AuthenticatedSystemSettingsBillingAffiliateRewardsIndexRoute: typeof AuthenticatedSystemSettingsBillingAffiliateRewardsIndexRoute
 }
 
 const AuthenticatedSystemSettingsRouteRouteChildren: AuthenticatedSystemSettingsRouteRouteChildren =
@@ -1393,6 +1493,8 @@ const AuthenticatedSystemSettingsRouteRouteChildren: AuthenticatedSystemSettings
       AuthenticatedSystemSettingsSecurityIndexRoute,
     AuthenticatedSystemSettingsSiteIndexRoute:
       AuthenticatedSystemSettingsSiteIndexRoute,
+    AuthenticatedSystemSettingsBillingAffiliateRewardsIndexRoute:
+      AuthenticatedSystemSettingsBillingAffiliateRewardsIndexRoute,
   }
 
 const AuthenticatedSystemSettingsRouteRouteWithChildren =
@@ -1409,6 +1511,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedModelsSectionRoute: typeof AuthenticatedModelsSectionRoute
   AuthenticatedUsageLogsSectionRoute: typeof AuthenticatedUsageLogsSectionRoute
   AuthenticatedUsageLogsAuditRoute: typeof AuthenticatedUsageLogsAuditRoute
+  AuthenticatedAccountingIndexRoute: typeof AuthenticatedAccountingIndexRoute
+  AuthenticatedAffiliateRewardsIndexRoute: typeof AuthenticatedAffiliateRewardsIndexRoute
+  AuthenticatedBillingRecordsIndexRoute: typeof AuthenticatedBillingRecordsIndexRoute
   AuthenticatedChannelsIndexRoute: typeof AuthenticatedChannelsIndexRoute
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
   AuthenticatedKeysIndexRoute: typeof AuthenticatedKeysIndexRoute
@@ -1425,6 +1530,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedUsersIndexRoute: typeof AuthenticatedUsersIndexRoute
   AuthenticatedWalletIndexRoute: typeof AuthenticatedWalletIndexRoute
   AuthenticatedOauthPluginKeyCallbackRoute: typeof AuthenticatedOauthPluginKeyCallbackRoute
+  AuthenticatedWelfareActivitiesIndexRoute: typeof AuthenticatedWelfareActivitiesIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1437,6 +1543,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedModelsSectionRoute: AuthenticatedModelsSectionRoute,
   AuthenticatedUsageLogsSectionRoute: AuthenticatedUsageLogsSectionRoute,
   AuthenticatedUsageLogsAuditRoute: AuthenticatedUsageLogsAuditRoute,
+  AuthenticatedAccountingIndexRoute: AuthenticatedAccountingIndexRoute,
+  AuthenticatedAffiliateRewardsIndexRoute:
+    AuthenticatedAffiliateRewardsIndexRoute,
+  AuthenticatedBillingRecordsIndexRoute: AuthenticatedBillingRecordsIndexRoute,
   AuthenticatedChannelsIndexRoute: AuthenticatedChannelsIndexRoute,
   AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
   AuthenticatedKeysIndexRoute: AuthenticatedKeysIndexRoute,
@@ -1456,6 +1566,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedWalletIndexRoute: AuthenticatedWalletIndexRoute,
   AuthenticatedOauthPluginKeyCallbackRoute:
     AuthenticatedOauthPluginKeyCallbackRoute,
+  AuthenticatedWelfareActivitiesIndexRoute:
+    AuthenticatedWelfareActivitiesIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

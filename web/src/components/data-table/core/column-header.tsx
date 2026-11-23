@@ -47,8 +47,16 @@ export function DataTableColumnHeader<TData, TValue>({
   className,
 }: DataTableColumnHeaderProps<TData, TValue>) {
   const { t } = useTranslation()
+  const headerSuffix = column.columnDef.meta?.headerSuffix
   if (!column.getCanSort()) {
-    return <div className={cn(className)}>{title}</div>
+    return (
+      <div
+        className={cn(headerSuffix != null && 'flex items-center gap-1', className)}
+      >
+        {title}
+        {headerSuffix}
+      </div>
+    )
   }
 
   return (
@@ -92,6 +100,7 @@ export function DataTableColumnHeader<TData, TValue>({
           )}
         </DropdownMenuContent>
       </DropdownMenu>
+      {headerSuffix}
     </div>
   )
 }

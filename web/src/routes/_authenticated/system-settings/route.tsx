@@ -23,8 +23,14 @@ import { ROLE } from '@/lib/roles'
 import { useAuthStore } from '@/stores/auth-store'
 
 export const Route = createFileRoute('/_authenticated/system-settings')({
-  beforeLoad: () => {
+  beforeLoad: ({ location }) => {
     const { auth } = useAuthStore.getState()
+
+    // 只开放福利管理这一条路径，不扩大普通管理员对其他系统设置的权限。
+    const isWelfareManagement =
+      location.pathname.replace(/\/$/, '') ===
+      '/system-settings/site/welfare-activities'
+    if (isWelfareManagement && auth.user?.role === ROLE.ADMIN) return
 
     if (auth.user?.role !== ROLE.SUPER_ADMIN) {
       throw redirect({

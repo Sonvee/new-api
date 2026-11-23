@@ -60,6 +60,28 @@ function getAnnouncementKey(item: Record<string, unknown>): string {
 }
 
 /**
+ * Sort announcements for notification display: pinned items first, then newest
+ * items within each group.
+ */
+export function sortAnnouncementsForDisplay(
+  announcements: Record<string, unknown>[]
+): Record<string, unknown>[] {
+  const sortedAnnouncements = [...announcements]
+  sortedAnnouncements.sort((a, b) => {
+    const aPinned = a.pinned === true
+    const bPinned = b.pinned === true
+    if (aPinned !== bPinned) return aPinned ? -1 : 1
+
+    const aPublishDate = Date.parse(String(a.publishDate ?? ''))
+    const bPublishDate = Date.parse(String(b.publishDate ?? ''))
+    const aTimestamp = Number.isNaN(aPublishDate) ? 0 : aPublishDate
+    const bTimestamp = Number.isNaN(bPublishDate) ? 0 : bPublishDate
+    return bTimestamp - aTimestamp
+  })
+  return sortedAnnouncements
+}
+
+/**
  * Hook to manage notifications (Notice + Announcements)
  * Provides unread counts and read status management
  */
@@ -85,10 +107,9 @@ export function useNotifications() {
   const announcementsEnabled = status?.announcements_enabled ?? false
   const announcements = useMemo<Record<string, unknown>[]>(() => {
     if (!announcementsEnabled) return []
-    return ((status?.announcements || []) as Record<string, unknown>[]).slice(
-      0,
-      20
-    )
+    return sortAnnouncementsForDisplay(
+      (status?.announcements || []) as Record<string, unknown>[]
+    ).slice(0, 20)
   }, [announcementsEnabled, status?.announcements])
 
   // Notification store
@@ -123,12 +144,29 @@ export function useNotifications() {
     }
   }, [noticeContent, lastReadNotice, announcements, isAnnouncementRead])
 
+  const unreadAnnouncements = useMemo(
+    () =>
+      announcements.filter((item) => {
+        const key = getAnnouncementKey(item)
+        return !isAnnouncementRead(key)
+      }),
+    [announcements, isAnnouncementRead]
+  )
+
   const markAnnouncementsAsRead = () => {
     if (announcements.length > 0) {
       const allKeys = announcements.map((item: Record<string, unknown>) =>
         getAnnouncementKey(item)
       )
       markAnnouncementsRead(allKeys)
+    }
+  }
+
+  const markUnreadAnnouncementsAsRead = () => {
+    if (unreadAnnouncements.length > 0) {
+      markAnnouncementsRead(
+        unreadAnnouncements.map((item) => getAnnouncementKey(item))
+      )
     }
   }
 
@@ -170,6 +208,7 @@ export function useNotifications() {
     // Data
     notice: noticeContent,
     announcements,
+    unreadAnnouncements,
     loading: noticeLoading || statusLoading,
 
     // Unread counts
@@ -186,6 +225,7 @@ export function useNotifications() {
     // Actions
     openPopover: handleOpenPopover,
     closePopover: () => setPopoverOpen(false),
+    markUnreadAnnouncementsAsRead,
     refetchNotice,
   }
 }

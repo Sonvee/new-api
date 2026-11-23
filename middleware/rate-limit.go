@@ -194,6 +194,12 @@ func CriticalRateLimit() func(c *gin.Context) {
 	return defNext
 }
 
+// 福利领取固定限制单用户短时连点，即使全局关键操作限流关闭也不能无限刷协调锁。
+// 复用现有用户限流器：启用 Redis 时跨实例共享，否则使用进程内限流。
+func WelfareClaimRateLimit() func(c *gin.Context) {
+	return userRateLimitFactory(3, 5, "welfare-claim")
+}
+
 func UserCriticalRateLimit(scope string) func(c *gin.Context) {
 	if !common.CriticalRateLimitEnable {
 		return defNext

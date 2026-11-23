@@ -69,9 +69,15 @@ function getSystemSettingsNavGroups(
           title: t('Billing & Payment'),
           icon: CreditCard,
           badge: badges.modelPricing,
-          items: getBillingSectionNavItems(t, {
-            'model-pricing': badges.modelPricing,
-          }),
+          items: [
+            ...getBillingSectionNavItems(t, {
+              'model-pricing': badges.modelPricing,
+            }),
+            {
+              title: t('Invitation Rewards'),
+              url: '/system-settings/billing/affiliate-rewards',
+            },
+          ],
         },
         {
           title: t('Models'),
